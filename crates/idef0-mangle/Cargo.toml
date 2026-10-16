@@ -1,7 +1,14 @@
 [package]
-name = "idef0-mangle"
-version = "0.1.0"
-edition = "2024"
-license = "MIT OR Apache-2.0"
+name         = "idef0-mangle"
+description  = "Fact extraction and Mangle (Datalog) validation for idef0-rs models (wasm-safe)"
+version.workspace      = true
+edition.workspace      = true
+rust-version.workspace = true
+license.workspace      = true
+repository.workspace   = true
+publish.workspace      = true
 
 [dependencies]
+
+[lints]
+workspace = true

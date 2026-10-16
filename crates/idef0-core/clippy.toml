@@ -1,0 +1,21 @@
+# Determinism bans for the wasm-safe crates (docs/architecture.md §2.3, NFR-DET-02..04).
+# Identical in idef0-core, idef0-mangle and idef0-layout; scripts/check-determinism-lints.sh enforces that.
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+disallowed-types = [
+  { path = "std::collections::HashMap", reason = "D6: iteration order; use BTreeMap or IndexMap" },
+  { path = "std::collections::HashSet", reason = "D6: iteration order; use BTreeSet" },
+  { path = "std::time::Instant",        reason = "D6 and wasm32 panic; inject Clock" },
+  { path = "std::time::SystemTime",     reason = "D6 and wasm32 panic; inject Clock" },
+]
+disallowed-methods = [
+  { path = "std::time::Instant::now",    reason = "inject Clock" },
+  { path = "std::time::SystemTime::now", reason = "inject Clock" },
+  { path = "ulid::Ulid::new",            reason = "D14: parsing never mints random ids" },
+  { path = "std::env::var",              reason = "core is environment-free" },
+  { path = "std::env::var_os",           reason = "core is environment-free" },
+  { path = "f64::sin", reason = "NFR-DET-04" }, { path = "f64::cos",   reason = "NFR-DET-04" },
+  { path = "f64::tan", reason = "NFR-DET-04" }, { path = "f64::powf",  reason = "NFR-DET-04" },
+  { path = "f64::exp", reason = "NFR-DET-04" }, { path = "f64::ln",    reason = "NFR-DET-04" },
+  { path = "f64::atan2", reason = "NFR-DET-04" },
+]

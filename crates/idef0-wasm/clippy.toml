@@ -1,0 +1,4 @@
+# idef0-wasm: std::time::Instant panics on wasm32-unknown-unknown; use web-time (docs/architecture.md §2.2).
+disallowed-types = [
+  { path = "std::time::Instant", reason = "panics on wasm32; use web_time::Instant" },
+]

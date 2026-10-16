@@ -1,7 +1,21 @@
 [package]
+name         = "idef0-server"
+description  = "Axum backend for idef0-rs: workspace store, HTTP/WS API, proposals (lib + bin)"
+version.workspace      = true
+edition.workspace      = true
+rust-version.workspace = true
+license.workspace      = true
+repository.workspace   = true
+publish.workspace      = true
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
 name = "idef0-server"
-version = "0.1.0"
-edition = "2024"
-license = "MIT OR Apache-2.0"
+path = "src/main.rs"
 
 [dependencies]
+
+[lints]
+workspace = true

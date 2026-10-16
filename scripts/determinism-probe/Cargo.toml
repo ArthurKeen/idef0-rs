@@ -1,0 +1,10 @@
+# Negative test fixture for the determinism lints (roadmap M0.2, docs/architecture.md §2.3).
+# Not a workspace member: scripts/check-determinism-lints.sh copies it to a temp dir together
+# with idef0-core's real clippy.toml and asserts that clippy rejects every probe below.
+[package]
+name = "determinism-probe"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]

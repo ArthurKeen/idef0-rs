@@ -90,7 +90,7 @@ disallowed-methods = [
 
 - `HashMap` used purely as an internal lookup table (never iterated into output) requires `#[expect(clippy::disallowed_types, reason = "...")]` at the use site, so every exception is visible in review.
 - Crates that do not depend on `ulid` simply never trigger that entry; it guards against the dependency creeping in.
-- Clippy's resolution of primitive inherent methods (`f64::sin`) in `disallowed-methods` is verified at M0.2; if unsupported, a source grep in the `lint` job replaces those entries.
+- **Verified at M0.2:** clippy resolves primitive inherent methods (`f64::sin`) in `disallowed-methods`. `scripts/check-determinism-lints.sh` is the negative test. It checks that the three strict files are identical, then runs clippy with that exact config on `scripts/determinism-probe/` and requires the `HashMap`, `Instant::now`, `env::var` and `f64::sin` probes to be rejected. CI runs it (M0.3).
 
 ---
 
@@ -611,112 +611,21 @@ Consolidated from the old NFR-PERF rows, §3.10 and FR-SEARCH-10. NFR-PERF-01..0
 
 ### 12.1 Workspace manifest
 
-Versions below were checked on crates.io on 2026-10-15. They are caret requirements; `Cargo.lock` is committed and pins exact versions. "verify at M0.2" marks entries whose version or feature set must be confirmed when the manifest is first built.
+The **authoritative manifest is the root [`Cargo.toml`](../Cargo.toml)**: `[workspace.package]`, every `[workspace.dependencies]` entry with its version and features, and `[workspace.lints]`. This section records policy and verification, not a copy of the manifest, so the two cannot drift. `Cargo.lock` is committed and pins exact versions.
 
-```toml
-# Cargo.toml (root)                                                              (illustrative)
-[workspace]
-resolver = "3"
-members  = ["crates/*"]
+**M0.2 verification (2026-10-16).**
+- All 62 dependency requirements resolve on crates.io, and every requested feature exists in the resolved version.
+  - One correction: `chromiumoxide` 0.9 is tokio-only and has no `tokio-runtime` feature, so the manifest uses `default-features = false` with no runtime feature.
+- The highest MSRV among resolved versions is 1.90 (`tree-sitter` 0.27), which confirms `rust-version = "1.90"`.
+- Checks deferred to the epic that first uses each crate (marked in `Cargo.toml`):
+  - `gloo-worker` × Leptos 0.8 compatibility (M7.1)
+  - tree-sitter grammar ABI compatibility (M10.1)
+  - `jsonschema` draft and resolver features (M3.4)
+  - `gungraun` runner install (M0.3)
+- Newer majors or minors exist for `compact_str` (0.10), `tower-http` (0.7), `notify-debouncer-full` (0.7) and `reqwest` (0.13). Each upgrade is its own PR.
 
-[workspace.package]
-edition      = "2024"
-rust-version = "1.90"
-license      = "MIT OR Apache-2.0"
-repository   = "https://github.com/<org>/idef0-rs"   # verify at M0.2
 
-[workspace.dependencies]
-# internal
-idef0-core   = { path = "crates/idef0-core" }
-idef0-mangle = { path = "crates/idef0-mangle" }
-idef0-layout = { path = "crates/idef0-layout" }
-idef0-ingest = { path = "crates/idef0-ingest" }
-idef0-server = { path = "crates/idef0-server" }
-# data and text (wasm-safe)
-serde                = { version = "1.0.228", features = ["derive", "rc"] }
-serde_json           = "1.0.145"
-winnow               = "1.0"
-smallvec             = { version = "1.15", features = ["serde", "union"] }
-compact_str          = { version = "0.9", features = ["serde"] }      # 0.10 is new; verify at M0.2
-nonempty             = { version = "0.12", features = ["serialize"] }  # feature name: verify at M0.2
-indexmap             = { version = "2.13", features = ["serde"] }
-unicode-segmentation = "1.12"
-unicode-width        = "0.2"
-thiserror            = "2.0"
-# search (wasm-safe)
-levenshtein_automata = "0.2.1"
-rust-stemmers        = "1.2"
-libm                 = "0.2"                                           # IDF scores on both targets (editor-ux search); verify at M0.2
-rstar                = "0.13"
-blake3               = { version = "1.8", default-features = false, features = ["pure"] }  # `pure` wherever wasm builds it
-# markdown
-pulldown-cmark       = { version = "0.13", default-features = false }
-ammonia              = "4.1"                                           # native exports only
-# wasm UI
-leptos               = { version = "0.8.21", features = ["csr"] }
-wasm-bindgen         = "0.2.126"                                       # must equal wasm-bindgen-cli in CI
-web-sys              = "0.3.103"
-js-sys               = "0.3.103"
-gloo-worker          = "0.6"                                           # verify Leptos 0.8 compatibility at M0.2
-web-time             = "1.1"
-getrandom            = { version = "0.4", features = ["wasm_js"] }    # idef0-wasm only, and only if needed
-# server and native
-tokio                = { version = "1.51", features = ["rt-multi-thread", "macros", "net", "fs", "signal", "sync"] }
-axum                 = { version = "0.8.6", features = ["ws"] }
-tower                = "0.5"
-tower-http           = { version = "0.6", features = ["trace", "compression-gzip", "cors", "fs", "limit", "set-header"] }  # 0.7 (2026-06) has breaking changes; evaluate at M0.2
-rust-embed           = "8.9"
-notify               = "8.2"
-notify-debouncer-full = "0.6"
-ignore               = "0.4.31"
-globset              = "0.4"                                           # config path globs (ingestion); verify at M0.2
-rayon                = "1.11"
-memchr               = "2.8"
-regex                = "1.12"
-tantivy              = "0.26"
-tree-sitter          = "0.27"                                          # MSRV 1.90; grammar ABI compatibility: verify at M0.2
-tree-sitter-rust       = "0.24"
-tree-sitter-python     = "0.25"
-tree-sitter-typescript = "0.23"
-tree-sitter-go         = "0.25"
-tree-sitter-java       = "0.23"
-resvg                = "0.48"
-tiny-skia            = "0.12"                                          # via resvg
-fontdb               = "0.24"                                          # must match usvg's fontdb requirement
-clap                 = { version = "4.5", features = ["derive", "env"] }
-serde-sarif          = "0.8"
-tracing              = "0.1.41"
-tracing-subscriber   = { version = "0.3.20", features = ["env-filter", "json"] }
-reqwest              = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "stream"] }  # server/cli only (Anthropic client, agents FR-AI-03); verify at M0.2
-camino               = "1"                                             # verify at M0.2
-# test and bench (dev-dependencies)
-insta                = { version = "1.47", features = ["json", "glob", "redactions"] }
-proptest             = "1.9"
-criterion            = { version = "0.8", default-features = false, features = ["cargo_bench_support"] }
-gungraun             = "0.20"                                          # successor of iai-callgrind; verify runner install at M0.3
-wasm-bindgen-test    = "0.3.76"  
-chromiumoxide        = { version = "0.9", default-features = false, features = ["tokio-runtime"] }  # features: verify at M0.2
-axum-test            = "21"                                            # optional; tower::ServiceExt is enough
-arbitrary            = { version = "1.4", features = ["derive"] }
-libfuzzer-sys        = "0.4"
-jsonschema           = { version = "0.58", default-features = false }  # SARIF/contract schema checks; verify features at M0.2
-
-[workspace.lints.rust]
-unsafe_code           = "forbid"
-missing_debug_implementations = "warn"
-unreachable_pub       = "warn"
-
-[workspace.lints.clippy]
-all       = { level = "deny", priority = -1 }
-pedantic  = { level = "warn", priority = -1 }
-module_name_repetitions = "allow"
-must_use_candidate      = "allow"
-dbg_macro = "deny"
-todo      = "warn"
-unwrap_used = "warn"          # deny in core/mangle/layout via crate attribute
-```
-
-- For `0.x` crates a caret requirement pins the minor version (`"0.26"` means `>=0.26, <0.27`), so minor upgrades of `0.x` crates are explicit PRs. Floors stay one minor behind where the newest minor is very recent or breaking (tower-http 0.7, compact_str 0.10). M0.2 may raise them.
+- For `0.x` crates a caret requirement pins the minor version (`"0.26"` means `>=0.26, <0.27`), so minor upgrades of `0.x` crates are explicit PRs. Floors stay one minor behind where the newest minor is very recent or breaking (tower-http 0.7, compact_str 0.10).
 - `mangle-rs` is a git dependency pinned by revision; it is added by M3.1 ([validation](spec/validation.md#11-engine-backends-and-the-m31-spike-gate)).
 - Tools that are not library dependencies, pinned in CI: `trunk 0.21.14` (0.22 is in release candidate), `wasm-bindgen-cli` (same version as the `wasm-bindgen` crate in `Cargo.lock`), `wasm-opt` (binaryen, via Trunk), `cargo-deny 0.20`, `cargo-insta`, `cargo-fuzz 0.13` (nightly toolchain), `dist 0.33` (formerly `cargo-dist`), `valgrind` (for gungraun).
 - No `ulid` dependency: proposal ids are sequential `P<nnnn>` ([agents §6.4](spec/agents.md#64-proposal-lifecycle)). No `fst` in v1 ([editor-ux](spec/editor-ux.md)).
@@ -811,7 +720,7 @@ Scoping the flag to the wasm target means native builds keep their cache when wa
 ## 14. Lints and code conventions (SR-48)
 
 - **`unsafe_code = "forbid"` workspace-wide, with no exceptions.** `forbid` cannot be overridden by a later `allow`, which is the point. If a future need for `unsafe` arises, it goes into a separate, audited crate outside this workspace, or an ADR changes the decision.
-- M0.2 verifies that `forbid` compiles with the proc macros in use (`leptos::view!`, `#[wasm_bindgen_test]`). Lint-level checks on external proc-macro expansions are normally suppressed; if one of them trips `forbid`, the M0.2 ADR records the fallback (`deny` workspace-wide, with each `#[allow(unsafe_code)]` requiring review).
+- **Verified at M0.2:** `#![forbid(unsafe_code)]` compiles on wasm32 with `leptos::view!` (Leptos 0.8.22 CSR) and `#[wasm_bindgen_test]` (wasm-bindgen-test 0.3.79), so no fallback ADR is needed. If a future proc macro trips `forbid`, an ADR records the fallback (`deny` workspace-wide, with each `#[allow(unsafe_code)]` requiring review).
 - Every crate sets `[lints] workspace = true`. Crate-level additions (`#![deny(clippy::unwrap_used)]` in core/mangle/layout) are attributes, because a crate that inherits workspace lints cannot also override them in its manifest.
 - Requirement IDs are cited in code and tests (`// FR-CALL-05`). Diagnostic codes are constants in one registry module per namespace ([validation](spec/validation.md#7-diagnostic-registry)).
 - `cargo fmt --check` and `cargo clippy --workspace --all-targets -- -D warnings` are required for every commit; core/mangle/layout are also linted for `--target wasm32-unknown-unknown`.

@@ -11,6 +11,10 @@ name = "idef0-core"
 version = "0.1.0"
 
 [[package]]
+name = "idef0-ingest"
+version = "0.1.0"
+
+[[package]]
 name = "idef0-layout"
 version = "0.1.0"
 
