@@ -40,9 +40,12 @@ second group has not happened here yet, but this repo is exposed to it.
   - A determinism test that compares two runs *in the same process* can pass
     while the output still depends on `HashMap` order or the platform. D6 needs
     separate runs and native-vs-wasm32 comparison.
-  - `std::time::Instant::now()` and `Ulid::new()` *compile* for
+  - `std::time::Instant::now()` and `std::time::SystemTime::now()` *compile* for
     `wasm32-unknown-unknown` and panic only at runtime. A green wasm build is not
-    proof; the clippy bans and `wasm-bindgen-test` are.
+    proof; the clippy bans and `wasm-bindgen-test` are. Randomness is the opposite
+    case: `rand`, `getrandom` and `ulid` (whose `Ulid::new` is `Ulid::generate` in
+    ulid 3) fail the wasm32 build unless something enables `getrandom`'s `wasm_js`
+    feature, which only `idef0-wasm` may do (architecture §2.2).
   - A clippy ban only works if clippy finds the right `clippy.toml`.
     `scripts/check-determinism-lints.sh` proves the strict config still rejects
     its probes.
@@ -58,8 +61,9 @@ Re-run every finding before you post it.
 - **Repo:** `ArthurKeen/idef0-rs`, **private**. The base branch is **`main`**.
   Pass `--repo` to every `gh` call.
 - **Merging:** merge commits, squash and rebase are all allowed, and head branches
-  are not auto-deleted. There is no convention yet, so check `git log main` for
-  how earlier PRs landed. A stacked PR (base is another PR's branch) keeps its
+  are not auto-deleted. PRs so far land as **merge commits** (#1), which keeps
+  stacked PRs clean; a squash would leave a stacked PR carrying duplicate copies
+  of its base's commits. Check `git log main` in case that has changed. A stacked PR (base is another PR's branch) keeps its
   base's commits until the base merges. Review only what it adds on top of its
   base, and say so.
 - **There is no branch protection and no required review.** Nothing stops a merge
@@ -83,6 +87,9 @@ Re-run every finding before you post it.
   the worktree. If a PR bumps it, that is its own PR (architecture §12.2).
 
 ## Method
+
+`$SCRATCH` below is the session's scratchpad directory. Never use `/tmp` or the
+main checkout for worktrees and target directories.
 
 ### 0. Load the context before reading the diff
 
@@ -129,14 +136,31 @@ rustc --version                                     # must match rust-toolchain.
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
-for c in idef0-core idef0-mangle idef0-layout; do   # the wasm-safe crates
+# the wasm-safe crates, plus idef0-wasm: its compile_error! for a missing
+# --cfg=web_sys_unstable_apis fires only in a wasm32 build
+for c in idef0-core idef0-mangle idef0-layout idef0-wasm; do
   cargo build  -p $c --target wasm32-unknown-unknown
   cargo clippy -p $c --target wasm32-unknown-unknown -- -D warnings
 done
 scripts/check-determinism-lints.sh                  # the bans still bite
-cargo tree -p idef0-wasm --target wasm32-unknown-unknown -e normal \
-  | grep -E '\b(cc|tree-sitter|tokio|mio|ring)\b' && echo "STOP: native dep in wasm tree"
+
+# wasm safety: no native crate in any wasm32 graph, and mangle and layout stay
+# independent. Silence means clean.
+for c in idef0-core idef0-mangle idef0-layout idef0-wasm; do
+  cargo tree -p $c --target wasm32-unknown-unknown -e normal --prefix none \
+    | grep -E '^(cc|tree-sitter[a-z-]*|tokio|mio|ring|idef0-ingest|idef0-server) ' \
+    | sed "s/^/STOP: $c pulls in /"
+done
+cargo tree -p idef0-mangle -e normal --prefix none | grep -q '^idef0-layout ' && echo "STOP: mangle depends on layout"
+cargo tree -p idef0-layout -e normal --prefix none | grep -q '^idef0-mangle ' && echo "STOP: layout depends on mangle"
 ```
+
+- **The guard needs its positive control.** Silence proves nothing if the trees
+  are empty. Add `idef0-ingest.workspace = true` under `[dependencies]` in
+  `crates/idef0-core/Cargo.toml` and confirm `STOP: idef0-core pulls in
+  idef0-ingest`; add `idef0-layout.workspace = true` to idef0-mangle and confirm
+  `STOP: mangle depends on layout`. Restore with
+  `git checkout -- crates/ Cargo.lock`.
 
 - **Report counts.** Compare the test counts with any the PR claims. Rust has no
   skip, but `#[ignore]` tests do not run: list every new `#[ignore]` and its
@@ -259,6 +283,12 @@ using `--comment` on the user's own PRs.
 - **Clippy config lookup:** clippy reads the `clippy.toml` nearest to each
   crate's manifest. A strict file deleted or moved in a PR silently drops the
   determinism bans. The probe script catches this, so run it.
+- **`RUSTFLAGS` replaces the wasm32 flags.** A `RUSTFLAGS` or
+  `CARGO_ENCODED_RUSTFLAGS` value in the shell overrides
+  `.cargo/config.toml`'s `[target.wasm32-unknown-unknown].rustflags`, and the
+  idef0-wasm wasm32 build then stops with its `web_sys_unstable_apis` error. That
+  is the environment, not the PR: `unset RUSTFLAGS CARGO_ENCODED_RUSTFLAGS`
+  before §2.
 - **wasm-only failures:** `cargo test` runs native only. Code under
   `cfg(target_arch = "wasm32")` is not covered unless the wasm32 build, clippy
   and `wasm-bindgen-test` run.
