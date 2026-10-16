@@ -51,46 +51,97 @@ This document owns the architecture principles and determinism contract (§2), t
 | ID | Rule | Enforcement |
 |---|---|---|
 | NFR-DET-02 | Output paths iterate only ordered collections (`BTreeMap`, `BTreeSet`, `Vec` sorted by an explicit total order, or `IndexMap` in insertion order). | `clippy::disallowed_types` bans `std::collections::{HashMap, HashSet}` in core, mangle and layout (§2.3). |
-| NFR-DET-03 | Core, mangle and layout never read the clock, the environment or a random source. Time and new keys come from an injected `Clock` and `KeyMinter` (§4.6). | `clippy::disallowed_methods` bans `Instant::now`, `SystemTime::now`, `Ulid::new`, `getrandom::*`, `rand::*`, `std::env::var*` in those crates; CI dependency audit (§15) bans `getrandom`, `rand` and `ulid` from their wasm32 dependency tree. |
-| NFR-DET-04 | Geometry is integer grid units (`i32` gu). Floats appear only at the SVG serialization boundary, formatted with exactly 2 decimals by one function (`svg::fmt2`). Transcendental float functions are not used in output paths. | `disallowed_methods` bans `f32/f64::{sin, cos, tan, powf, exp, ln, log10, atan2}` in layout; fillets and bridges are emitted as SVG arc commands, so no trig is needed ([layout](spec/layout.md#8-fillets)). |
+| NFR-DET-03 | Core, mangle and layout never read the clock, the environment or a random source. Time and new keys come from an injected `Clock` and `KeyMinter` (§4.6). | `clippy::disallowed_methods` bans `Instant::now`, `SystemTime::now`, the ulid 3 generators (`Ulid::generate`, `Ulid::from_datetime`, `Generator::generate*`), the entropy entry points of `getrandom` 0.4 and `rand` 0.10, and `std::env::var*` in those crates (clippy cannot glob a crate, so §2.3 lists them one by one); CI dependency audit (§15) bans `getrandom`, `rand` and `ulid` from their wasm32 dependency tree. |
+| NFR-DET-04 | Geometry is integer grid units (`i32` gu). Floats appear only at the SVG serialization boundary, formatted with exactly 2 decimals by one function (`svg::fmt2`). Transcendental float functions are not used in output paths. | `disallowed_methods` bans the `f32`/`f64` transcendental functions (trigonometric, hyperbolic, `exp*`, `ln*`, `log*`, `powf`, `cbrt`, `hypot`) and `powi` in core, mangle and layout; `sqrt` and `mul_add` are correctly rounded and stay allowed; fillets and bridges are emitted as SVG arc commands, so no trig is needed ([layout](spec/layout.md#8-fillets)). |
 | — | All sorts on output data use a total order; ties break by element key. | Code review; property tests compare 100 repeated runs ([testing §4](testing.md#4-cross-target-determinism)). |
 | — | Parallelism (rayon) exists only in `idef0-ingest`; results are sorted before they leave the crate. | Crate dependency rules (§3.2). |
 | — | Text width uses `unicode-width` over grapheme clusters (`unicode-segmentation`); both tables are compiled in, so native and wasm agree. Browser font rendering is outside the contract; see [layout](spec/layout.md#33-text-metrics-sr-49) for kerning and ligature control. | Golden tests. |
 | — | Serde JSON output uses struct field order and `BTreeMap` for maps; `serde_json`'s `preserve_order` and `arbitrary_precision` features are off. | Golden tests. |
-| — | Time is needed only in the UI (debounce, status line) and the server. In wasm it comes from `web-time`; `std::time::Instant` panics on `wasm32-unknown-unknown`. | `disallowed_types` bans `std::time::Instant` in `idef0-wasm`. |
-| — | If randomness is ever needed in the browser, only the `idef0-wasm` binary crate enables `getrandom`'s `wasm_js` feature (getrandom 0.4). Libraries never enable it. | Dependency audit. |
+| — | Time is needed only in the UI (debounce, status line) and the server. In wasm it comes from `web-time`; `std::time::Instant` panics on `wasm32-unknown-unknown`. | `disallowed_types` bans `std::time::{Instant, SystemTime}` in `idef0-wasm`. |
+| — | If randomness is ever needed in the browser, only the `idef0-wasm` binary crate enables `getrandom`'s `wasm_js` feature (getrandom 0.4), in its own manifest; `[workspace.dependencies]` declares `getrandom` without features. Libraries never enable it. | Dependency audit. |
 
 - Cross-target equality is tested by comparing native golden JSON with wasm32 output ([testing §4](testing.md#4-cross-target-determinism)).
 - A determinism failure is a release blocker. Tests guarding it are never weakened to make a change pass.
 
 ### 2.3 Clippy configuration (normative)
 
-Clippy reads the `clippy.toml` nearest to each crate's manifest. The three wasm-safe crates carry a strict file; the other crates use the root file.
+Clippy reads only the `clippy.toml` nearest to each crate's manifest; files do not merge. The three wasm-safe crates carry a strict file. `idef0-wasm` carries its own file that repeats the root settings and bans `std::time::{Instant, SystemTime}` (§2.2). The other crates use the root file. The strict files stay copies rather than symlinks because Windows checkouts do not create symlinks by default.
 
 ```toml
 # crates/idef0-core/clippy.toml (identical in idef0-mangle and idef0-layout)   (normative)
+# Determinism bans for the wasm-safe crates (docs/architecture.md §2.3, NFR-DET-02..04).
+# Identical in idef0-core, idef0-mangle and idef0-layout; scripts/check-determinism-lints.sh enforces that
+# and requires every entry below to fire on scripts/determinism-probe/.
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
 disallowed-types = [
   { path = "std::collections::HashMap", reason = "D6: iteration order; use BTreeMap or IndexMap" },
   { path = "std::collections::HashSet", reason = "D6: iteration order; use BTreeSet" },
   { path = "std::time::Instant",        reason = "D6 and wasm32 panic; inject Clock" },
   { path = "std::time::SystemTime",     reason = "D6 and wasm32 panic; inject Clock" },
+  { path = "rand::rngs::ThreadRng",     reason = "NFR-DET-03: no random source" },
+  { path = "getrandom::SysRng",         reason = "NFR-DET-03: no random source" },
 ]
+# Clippy cannot glob a crate (`rand::*`), so the entropy entry points of ulid 3, rand 0.10 and getrandom 0.4
+# are listed one by one; the CI dependency audit (§15) is the backstop. Entries for crates outside the
+# dependency tree are inert until the crate creeps in.
 disallowed-methods = [
   { path = "std::time::Instant::now",    reason = "inject Clock" },
   { path = "std::time::SystemTime::now", reason = "inject Clock" },
-  { path = "ulid::Ulid::new",            reason = "D14: parsing never mints random ids" },
+  { path = "ulid::Ulid::generate",                 reason = "D14: parsing never mints random ids" },
+  { path = "ulid::Ulid::from_datetime",            reason = "D14: parsing never mints random ids" },
+  { path = "ulid::Generator::generate",            reason = "D14: parsing never mints random ids" },
+  { path = "ulid::Generator::generate_from_datetime", reason = "D14: parsing never mints random ids" },
   { path = "std::env::var",              reason = "core is environment-free" },
   { path = "std::env::var_os",           reason = "core is environment-free" },
-  { path = "f64::sin", reason = "NFR-DET-04" }, { path = "f64::cos",   reason = "NFR-DET-04" },
-  { path = "f64::tan", reason = "NFR-DET-04" }, { path = "f64::powf",  reason = "NFR-DET-04" },
-  { path = "f64::exp", reason = "NFR-DET-04" }, { path = "f64::ln",    reason = "NFR-DET-04" },
-  { path = "f64::atan2", reason = "NFR-DET-04" },
+  { path = "std::env::vars",             reason = "core is environment-free" },
+  { path = "std::env::vars_os",          reason = "core is environment-free" },
+  { path = "getrandom::fill",        reason = "NFR-DET-03: no random source" },
+  { path = "getrandom::fill_uninit", reason = "NFR-DET-03: no random source" },
+  { path = "getrandom::u32",         reason = "NFR-DET-03: no random source" },
+  { path = "getrandom::u64",         reason = "NFR-DET-03: no random source" },
+  { path = "rand::rng",          reason = "NFR-DET-03: no random source" },
+  { path = "rand::make_rng",     reason = "NFR-DET-03: no random source" },
+  { path = "rand::random",       reason = "NFR-DET-03: no random source" },
+  { path = "rand::random_iter",  reason = "NFR-DET-03: no random source" },
+  { path = "rand::random_range", reason = "NFR-DET-03: no random source" },
+  { path = "rand::random_bool",  reason = "NFR-DET-03: no random source" },
+  { path = "rand::random_ratio", reason = "NFR-DET-03: no random source" },
+  { path = "rand::fill",         reason = "NFR-DET-03: no random source" },
+  # NFR-DET-04: transcendental functions (and powi, documented as non-deterministic) may differ
+  # between native libm and wasm32. sqrt and mul_add are correctly rounded and stay allowed.
+  { path = "f32::sin",    reason = "NFR-DET-04" }, { path = "f64::sin",    reason = "NFR-DET-04" },
+  { path = "f32::cos",    reason = "NFR-DET-04" }, { path = "f64::cos",    reason = "NFR-DET-04" },
+  { path = "f32::tan",    reason = "NFR-DET-04" }, { path = "f64::tan",    reason = "NFR-DET-04" },
+  { path = "f32::sin_cos", reason = "NFR-DET-04" }, { path = "f64::sin_cos", reason = "NFR-DET-04" },
+  { path = "f32::asin",   reason = "NFR-DET-04" }, { path = "f64::asin",   reason = "NFR-DET-04" },
+  { path = "f32::acos",   reason = "NFR-DET-04" }, { path = "f64::acos",   reason = "NFR-DET-04" },
+  { path = "f32::atan",   reason = "NFR-DET-04" }, { path = "f64::atan",   reason = "NFR-DET-04" },
+  { path = "f32::atan2",  reason = "NFR-DET-04" }, { path = "f64::atan2",  reason = "NFR-DET-04" },
+  { path = "f32::sinh",   reason = "NFR-DET-04" }, { path = "f64::sinh",   reason = "NFR-DET-04" },
+  { path = "f32::cosh",   reason = "NFR-DET-04" }, { path = "f64::cosh",   reason = "NFR-DET-04" },
+  { path = "f32::tanh",   reason = "NFR-DET-04" }, { path = "f64::tanh",   reason = "NFR-DET-04" },
+  { path = "f32::asinh",  reason = "NFR-DET-04" }, { path = "f64::asinh",  reason = "NFR-DET-04" },
+  { path = "f32::acosh",  reason = "NFR-DET-04" }, { path = "f64::acosh",  reason = "NFR-DET-04" },
+  { path = "f32::atanh",  reason = "NFR-DET-04" }, { path = "f64::atanh",  reason = "NFR-DET-04" },
+  { path = "f32::exp",    reason = "NFR-DET-04" }, { path = "f64::exp",    reason = "NFR-DET-04" },
+  { path = "f32::exp2",   reason = "NFR-DET-04" }, { path = "f64::exp2",   reason = "NFR-DET-04" },
+  { path = "f32::exp_m1", reason = "NFR-DET-04" }, { path = "f64::exp_m1", reason = "NFR-DET-04" },
+  { path = "f32::ln",     reason = "NFR-DET-04" }, { path = "f64::ln",     reason = "NFR-DET-04" },
+  { path = "f32::ln_1p",  reason = "NFR-DET-04" }, { path = "f64::ln_1p",  reason = "NFR-DET-04" },
+  { path = "f32::log",    reason = "NFR-DET-04" }, { path = "f64::log",    reason = "NFR-DET-04" },
+  { path = "f32::log2",   reason = "NFR-DET-04" }, { path = "f64::log2",   reason = "NFR-DET-04" },
+  { path = "f32::log10",  reason = "NFR-DET-04" }, { path = "f64::log10",  reason = "NFR-DET-04" },
+  { path = "f32::powf",   reason = "NFR-DET-04" }, { path = "f64::powf",   reason = "NFR-DET-04" },
+  { path = "f32::powi",   reason = "NFR-DET-04" }, { path = "f64::powi",   reason = "NFR-DET-04" },
+  { path = "f32::cbrt",   reason = "NFR-DET-04" }, { path = "f64::cbrt",   reason = "NFR-DET-04" },
+  { path = "f32::hypot",  reason = "NFR-DET-04" }, { path = "f64::hypot",  reason = "NFR-DET-04" },
 ]
 ```
 
 - `HashMap` used purely as an internal lookup table (never iterated into output) requires `#[expect(clippy::disallowed_types, reason = "...")]` at the use site, so every exception is visible in review.
-- Crates that do not depend on `ulid` simply never trigger that entry; it guards against the dependency creeping in.
-- **Verified at M0.2:** clippy resolves primitive inherent methods (`f64::sin`) in `disallowed-methods`. `scripts/check-determinism-lints.sh` is the negative test. It checks that the three strict files are identical, then runs clippy with that exact config on `scripts/determinism-probe/` and requires the `HashMap`, `Instant::now`, `env::var` and `f64::sin` probes to be rejected. CI runs it (M0.3).
+- Entries for crates outside a crate's dependency tree (`ulid`, `rand`, `getrandom`) are inert; they guard against the dependency creeping in. A misspelled path inside a crate that is present makes clippy warn that it "does not refer to a reachable function".
+- **Verified at M0.2:** clippy resolves primitive inherent methods (`f64::sin`) in `disallowed-methods`. `scripts/check-determinism-lints.sh` is the negative test. It checks that the three strict files are identical, then runs clippy with that exact config on `scripts/determinism-probe/` (which depends on `ulid`, `rand` and `getrandom` with a committed `Cargo.lock`, so those paths resolve) and requires every `path` in the file to be reported and none to be unresolvable. A new ban therefore needs a new probe. CI runs it (M0.3).
 
 ---
 
@@ -699,7 +750,7 @@ ws = true
 rustflags = ["--cfg=web_sys_unstable_apis"]   # File System Access API bindings in web-sys
 ```
 
-Scoping the flag to the wasm target means native builds keep their cache when wasm is built. If `getrandom` is ever needed in the browser, only the `wasm_js` feature on `idef0-wasm` is required (getrandom 0.4); no extra `--cfg` is needed.
+Scoping the flag to the wasm target means native builds keep their cache when wasm is built. Cargo ignores this table when `RUSTFLAGS` or `CARGO_ENCODED_RUSTFLAGS` is set, so CI must not set them for wasm builds; `idef0-wasm` has a `compile_error!` guard for a wasm32 build without the cfg, and `[workspace.lints.rust]` declares it in `unexpected_cfgs`. If `getrandom` is ever needed in the browser, only the `wasm_js` feature on `idef0-wasm` is required (getrandom 0.4); no extra `--cfg` is needed.
 
 ### 13.2 How `idef0 serve` finds the UI
 

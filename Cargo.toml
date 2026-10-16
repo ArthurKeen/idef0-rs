@@ -51,7 +51,7 @@ web-sys              = "0.3.103"
 js-sys               = "0.3.103"
 gloo-worker          = "0.6"                                           # Leptos 0.8 compatibility: verify at M7.1
 web-time             = "1.1"
-getrandom            = { version = "0.4", features = ["wasm_js"] }    # idef0-wasm only, and only if needed
+getrandom            = "0.4"                                           # idef0-wasm only, and only if needed; it adds `features = ["wasm_js"]` itself (§2.2)
 
 # server and native
 tokio                = { version = "1.51", features = ["rt-multi-thread", "macros", "net", "fs", "signal", "sync"] }
@@ -99,6 +99,7 @@ jsonschema           = { version = "0.58", default-features = false }  # pick dr
 unsafe_code                   = "forbid"   # no exceptions (architecture §14); verified with leptos::view! and #[wasm_bindgen_test]
 missing_debug_implementations = "warn"
 unreachable_pub               = "warn"
+unexpected_cfgs               = { level = "warn", check-cfg = ["cfg(web_sys_unstable_apis)"] }  # set by .cargo/config.toml for wasm32
 
 [workspace.lints.clippy]
 all       = { level = "deny", priority = -1 }
