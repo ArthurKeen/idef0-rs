@@ -58,6 +58,7 @@ idef0-rs is an AI-first, keyboard-driven IDEF0 (FIPS PUB 183) modeling tool writ
    - for core, mangle and layout: `cargo build -p <crate> --target wasm32-unknown-unknown`
 4. Never weaken a golden, snapshot or determinism test to make it pass. Update a snapshot only for an intended change, and say so in the commit.
 5. Commit message: `M<n>.<k>: <summary>`, citing requirement IDs (FR-*, R-*, SR-* when fixing review findings).
+6. Review PRs with `/pr-review <N>` ([.claude/skills/pr-review](.claude/skills/pr-review/SKILL.md)). It verifies claims in a worktree and drafts the review. Nothing is posted until the user approves.
 
 ## Repo state
 
