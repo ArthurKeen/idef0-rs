@@ -1,0 +1,150 @@
+idef0 0.2
+# Dogfood fixture: idef0-rs modeled in itself. Expected results: EXPECTED.md (same directory).
+# Grammar: docs/spec/metamodel.md §16. Canonical form (idef0 fmt --check passes).
+model "idef0-rs" {
+  abbrev "IR"
+  description "IDEF0 model of the idef0-rs toolchain itself."
+  purpose "Specify, validate and trace software function contracts so AI agents implement them faithfully."
+  viewpoint "Systems architect directing AI coding agents"
+  scope "From requirement text to tagged, validated source code."
+  author "AK"
+  profile extended
+}
+
+# ---------------- Concepts (FR-NAME-02) ----------------
+concept prd-documents "PRD Documents" {
+  description "A set of Markdown product requirements documents (PRD) that state what the system must do, optionally tagged with @idef0 anchors."
+  synonyms "Requirements Specifications"
+}
+concept source-code "Source Code" {
+  description "The program text of the repository, possibly carrying @implements and related contract tags."
+}
+concept idef0-standard "IDEF0 Standard (FIPS 183)" {
+  description "The Federal Information Processing Standard (FIPS) PUB 183 that defines Integration Definition for Function Modeling (IDEF0) syntax, semantics and diagram conventions."
+}
+concept syntax-rules "Syntax Rules" {
+  description "The part of the IDEF0 standard that constrains boxes, arrows, ICOM roles and balance."
+  part_of idef0-standard
+}
+concept diagram-conventions "Diagram Conventions" {
+  description "The part of the IDEF0 standard that governs box placement, arrow routing and diagram form."
+  part_of idef0-standard
+}
+concept project-rules "Project Rules" {
+  description "A set of organization-specific Mangle rules that add methodology constraints to a model."
+}
+concept tagging-standard "Tagging Standard" {
+  description "The convention for @idef0 anchors in documents and @implements tags in code."
+}
+concept requirement-index "Requirement Index" {
+  description "A structured index of tagged requirement sections, requirement IDs and content hashes."
+}
+concept draft-model "Draft Model" {
+  description "An IDEF0 function model under authoring, not yet free of rule violations."
+}
+concept diagnostics "Diagnostics" {
+  description "A set of rule violations and lints, each with a code, severity, subject and message."
+}
+concept diagram-scenes "Diagram Scenes" {
+  description "A set of laid-out display lists of boxes, routed arrows and labels, ready to render as SVG or ASCII."
+}
+concept code-facts "Code Facts" {
+  description "A set of Datalog facts describing tagged code elements and the boxes and ICOMs they implement."
+}
+concept validated-function-model "Validated Model" {
+  description "A draft model that satisfies all error-severity rules."
+  kind_of draft-model
+}
+concept contract-cards "Contract Cards" {
+  description "A set of per-function exports of ICOM contracts with concept definitions, requirements and implementing code."
+}
+concept idef0-toolchain "idef0-rs Toolchain" {
+  description "The set of idef0-rs crates and binaries that perform modeling, validation and tracing."
+}
+concept ingest-engine "Ingest Engine" {
+  description "The idef0-ingest component that parses tagged Markdown documents."
+  part_of idef0-toolchain
+}
+concept code-scanner "Code Scanner" {
+  description "The idef0-ingest component that binds code tags to AST items via tree-sitter."
+  part_of idef0-toolchain
+}
+concept mangle-engine "Mangle Engine" {
+  description "The idef0-mangle component that evaluates IDEF0 rules over extracted facts."
+  part_of idef0-toolchain
+}
+concept layout-engine "Layout Engine" {
+  description "The idef0-layout component that places boxes and routes arrows through channels."
+  part_of idef0-toolchain
+}
+concept analyst-and-agent "Analyst & AI Agent" {
+  description "The human analyst and the artificial intelligence (AI) coding agents who author and refine the model."
+}
+
+# ---------------- Diagrams ----------------
+diagram A-0 "Model System Requirements" status=working c="AK1" {
+  description "Context: idef0-rs turns requirement text and code into a validated, traceable function model."
+  box 0 "Model System Requirements" key=model-system {
+    description "The whole idef0-rs toolchain seen as one function: capturing what a software system must do as checkable function contracts, and keeping those contracts tied to the requirements and code they come from."
+  }
+  arrow @prd-documents : I1 -> 0I1
+  arrow @source-code : I2 -> 0I2
+  arrow @idef0-standard : C1 -> 0C1
+  arrow @project-rules : C2 -> 0C2
+  arrow @tagging-standard : C3 -> 0C3
+  arrow @validated-function-model : 0O1 -> O1
+  arrow @contract-cards : 0O2 -> O2
+  arrow @idef0-toolchain : M1 -> 0M1
+  arrow @analyst-and-agent : M2 -> 0M2 kind=resource
+}
+
+diagram A0 "Model System Requirements" status=draft c="AK2" {  # title = name of top box A0 (§2.48)
+  description "Authoring is the hub: validation results and rendered scenes return to it as controls, while code facts reach validation from the tracing side."
+
+  box 1 "Ingest Specifications" key=ingest {
+    description "Extracts the structure that requirement authors have marked up, so later functions can cite a specific requirement section instead of a whole document."
+  }
+  box 2 "Author Draft Model" key=author {
+    description "Decomposes the system into named, described functions and concepts; the one function where human and agent judgment shape the model."
+  }
+  box 3 "Validate Model Rules" key=validate {
+    description "Decides deductively whether the model is well-formed IDEF0 and meets project methodology, with identical results in the browser and in CI."
+  }
+  box 4 "Lay Out Diagrams" key=layout {
+    description "Computes diagram geometry from the model alone, so nobody draws boxes or arrows by hand and every rendering is reproducible."
+  }
+  box 5 "Trace Implementing Code" key=trace {
+    description "Connects functions to the code that implements them and packages each function's contract for coding agents."
+  }
+
+  arrow @prd-documents : I1 -> 1I1
+  arrow @requirement-index : 1O1 -> 2I1
+  arrow @draft-model : 2O1 -> fork {
+    -> 3I1  # rel=all: unlabeled branches carry the trunk concept
+    -> 4I1
+  }
+  arrow @diagnostics : 3O1 -> 2C1  # feedback: up and over
+  arrow @diagram-scenes : 4O1 -> 2C2  # feedback: up and over
+  arrow @source-code : I2 -> 5I1
+  arrow @code-facts : 5O1 -> 3I2  # feedback: down and under
+  arrow @validated-function-model : 3O2 -> O1
+  arrow @contract-cards : 5O2 -> O2
+
+  arrow @idef0-standard : C1 -> fork {
+    @syntax-rules -> 3C1 rel=part_of
+    @diagram-conventions -> 4C1 rel=part_of
+  }
+  arrow @project-rules : C2 -> 3C2
+  arrow @tagging-standard : C3 -> fork {
+    -> 1C1
+    -> 5C1
+  }
+
+  arrow @idef0-toolchain : M1 -> fork {
+    @ingest-engine -> 1M1 rel=part_of code="crates/idef0-ingest/src/prd.rs"
+    @mangle-engine -> 3M1 rel=part_of code="crates/idef0-mangle/src/lib.rs"
+    @layout-engine -> 4M1 rel=part_of code="crates/idef0-layout/src/lib.rs"
+    @code-scanner -> 5M1 rel=part_of code="crates/idef0-ingest/src/code.rs"
+  }
+  arrow @analyst-and-agent : M2 -> 2M1 kind=resource
+}

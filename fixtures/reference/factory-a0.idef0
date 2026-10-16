@@ -1,0 +1,43 @@
+idef0 0.2
+# Reference fixture: A-0 "Develop/Update a Factory".
+# Source image: docs/research/examples/factory-a0.png. Expected diagnostics: factory-a0.expected.md.
+# Port ranks follow the image exactly. Texts not visible in the image are TBD placeholders.
+model "Factory Development" {
+  abbrev "FAC"
+  purpose "TBD (not shown in reference image)"
+  viewpoint "TBD (not shown in reference image)"
+}
+
+concept market-information "Market Information" { description "TBD" }
+concept product-information "Product Information" { description "TBD" }
+concept resource-information "Resource Information" { description "TBD" }
+concept budget "Budget" { description "TBD" }
+concept project-time "Project Time" { description "TBD" }
+concept reference-factory-info "Reference Factory Information" { description "TBD" }
+concept administrative-info "Administrative Information" { description "TBD" }
+concept goal "Goal" { description "TBD" }
+concept regulation "Regulation" { description "TBD" }
+concept factory-specification "New or Updated Factory Specification" { description "TBD" }
+concept performance-result "Performance Result" { description "TBD" }
+concept capa-plans "Corrective Action & Preventive Action Plans" { description "TBD" }
+concept standard-operating-procedures "Standard Operating Procedures" { description "TBD" }
+concept manufacturing-software-system "Manufacturing Software System" { description "TBD" }
+
+diagram A-0 "Develop/Update a Factory" status=working {
+  box 0 "Develop/Update a Factory" key=develop-factory { description "TBD" }
+
+  arrow @market-information : I1 -> 0I1
+  arrow @product-information : I2 -> 0I2
+  arrow @resource-information : I3 -> 0I3
+  arrow @budget : C1 -> 0C1
+  arrow @project-time : C2 -> 0C2
+  arrow @reference-factory-info : C3 -> 0C3
+  arrow @administrative-info : C4 -> 0C4
+  arrow @goal : C5 -> 0C5
+  arrow @regulation : C6 -> 0C6
+  arrow @factory-specification : 0O1 -> O1
+  arrow @performance-result : 0O2 -> O2
+  arrow @capa-plans : 0O3 -> O3
+  arrow @standard-operating-procedures : 0O4 -> O4
+  arrow @manufacturing-software-system : M1 -> 0M1 kind=component
+}

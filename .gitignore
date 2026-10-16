@@ -1,0 +1,15 @@
+# Rust build output
+/target/
+/dist/
+
+# idef0 workspace state that is local by design (see docs/spec/metamodel.md, workspace layout)
+.idef0/cache/
+.idef0/run/
+.idef0/proposals/
+.idef0/index.json
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/
