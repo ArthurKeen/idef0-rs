@@ -1,0 +1,6 @@
+# Exact stable pin (docs/architecture.md §12.2). Bumps are their own PR.
+[toolchain]
+channel    = "1.96.0"
+components = ["rustfmt", "clippy"]
+targets    = ["wasm32-unknown-unknown"]
+profile    = "minimal"

@@ -1,0 +1,4 @@
+# Native crates (idef0-ingest, idef0-server, idef0-cli). The wasm-safe crates carry a
+# stricter clippy.toml next to their manifest (docs/architecture.md §2.3).
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true

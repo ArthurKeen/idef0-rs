@@ -1,0 +1,17 @@
+# Negative test fixture for the determinism lints (roadmap M0.2, docs/architecture.md §2.3).
+# Not a workspace member: scripts/check-determinism-lints.sh copies it to a temp dir together
+# with idef0-core's real clippy.toml and asserts that clippy rejects every probe below.
+# The dependencies exist only so that the ulid, rand and getrandom ban paths resolve.
+[package]
+name = "determinism-probe"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+# Its own workspace root, so cargo and rust-analyzer work in this directory too.
+[workspace]
+
+[dependencies]
+ulid      = "3"
+rand      = "0.10"
+getrandom = { version = "0.4", features = ["sys_rng"] }
