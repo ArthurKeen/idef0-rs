@@ -784,13 +784,14 @@ Scoping the flag to the wasm target means native builds keep their cache when wa
 
 | Job | Runner | Steps | Budget |
 |---|---|---|---|
-| `lint` | ubuntu-24.04 | fmt; clippy native; clippy wasm32 (core, mangle, layout, wasm); `cargo deny check`; dependency audit (§3.2, §2.2) | 5 min |
+| `lint` | ubuntu-24.04 | fmt; clippy native; clippy wasm32 (core, mangle, layout, wasm); determinism lint probe (`scripts/check-determinism-lints.sh`, §2.3); dependency audit (`scripts/check-dependency-graph.sh`, §3.2, §2.2); `cargo deny check` | 5 min |
 | `test-linux` | ubuntu-24.04 | `cargo test --workspace` (unit, property at PR depth, insta with `--check --unreferenced=reject`, conformance, FSM scripts, geometry checker, API/security integration, fuzz-corpus replay) | 10 min |
 | `test-macos` | macos-14 (arm64) | build + test native crates | 12 min |
 | `test-windows` | windows-2022 (MSVC) | build + test native crates; tree-sitter grammars need the MSVC C toolchain | 15 min |
 | `wasm` | ubuntu-24.04 | `cargo build --target wasm32-unknown-unknown -p idef0-core -p idef0-mangle -p idef0-layout`; `wasm-bindgen-test` in headless Chrome (cross-target goldens, DOM smoke); `trunk build --release` + bundle-size check (NFR-WASM-01) | 10 min |
 | `e2e` | ubuntu-24.04 + Chrome stable | `idef0 serve` + chromiumoxide scenarios + accessibility-tree assertions | 10 min |
 | `bench-gate` | ubuntu-24.04 | gungraun instruction counts vs committed baseline | 8 min |
+| `docs` | ubuntu-24.04 | `scripts/check-doc-links.py`: relative links and `#anchors` in every Markdown file except `docs/archive/` | 2 min |
 | `msrv` | ubuntu-24.04 | `cargo +1.90 check` of native crates | 5 min |
 | `dogfood` | ubuntu-24.04 | `idef0 validate --locked --fail-on error` on `fixtures/dogfood/` and (from M10.7) on the repo itself; SARIF uploaded to code scanning | 3 min |
 
