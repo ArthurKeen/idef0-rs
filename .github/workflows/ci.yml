@@ -1,0 +1,95 @@
+# Pull-request pipeline, base jobs (roadmap M0.3; docs/architecture.md §15.1).
+# Cross-OS and MSRV jobs arrive in M0.4; wasm-bindgen-test, trunk, e2e, bench-gate and dogfood
+# arrive with the epics that create what they test.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  lint:
+    name: lint (fmt, clippy native + wasm32, determinism, deps, deny)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the pinned toolchain (rust-toolchain.toml)
+        run: |
+          channel="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' rust-toolchain.toml)"
+          rustup toolchain install "$channel" --profile minimal \
+            --component rustfmt,clippy --target wasm32-unknown-unknown
+          rustc --version
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny@0.20
+      - name: rustfmt
+        run: cargo fmt --all --check
+      - name: clippy (native)
+        run: cargo clippy --locked --workspace --all-targets -- -D warnings
+      - name: clippy (wasm32; core, mangle, layout, wasm)
+        run: >
+          cargo clippy --locked --target wasm32-unknown-unknown
+          -p idef0-core -p idef0-mangle -p idef0-layout -p idef0-wasm -- -D warnings
+      - name: Determinism lint probe (NFR-DET-02..04)
+        run: scripts/check-determinism-lints.sh
+      - name: Dependency graph audit (architecture §2.2, §3.2)
+        run: scripts/check-dependency-graph.sh
+      - name: cargo deny (licenses, bans, advisories, sources)
+        run: cargo deny --locked check
+
+  test-linux:
+    name: test (linux)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the pinned toolchain (rust-toolchain.toml)
+        run: |
+          channel="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' rust-toolchain.toml)"
+          rustup toolchain install "$channel" --profile minimal
+          rustc --version
+      - uses: Swatinem/rust-cache@v2
+      - name: cargo test
+        run: cargo test --locked --workspace
+
+  wasm:
+    name: wasm32 build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the pinned toolchain (rust-toolchain.toml)
+        run: |
+          channel="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' rust-toolchain.toml)"
+          rustup toolchain install "$channel" --profile minimal --target wasm32-unknown-unknown
+          rustc --version
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: wasm32
+      - name: cargo build (wasm32-unknown-unknown)
+        run: >
+          cargo build --locked --target wasm32-unknown-unknown
+          -p idef0-core -p idef0-mangle -p idef0-layout -p idef0-wasm
+
+  docs:
+    name: docs links
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Relative links and anchors
+        run: python3 scripts/check-doc-links.py

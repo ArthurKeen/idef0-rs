@@ -1,0 +1,45 @@
+# cargo-deny configuration (docs/architecture.md §17.1, NFR-LIC-01). CI: `cargo deny check`.
+# Any change to the license allowlist needs a PR that names the crate requiring it.
+
+[graph]
+all-features = true
+
+[advisories]
+version = 2
+yanked = "deny"
+ignore = []
+
+[licenses]
+version = 2
+confidence-threshold = 0.9
+unused-allowed-license = "allow"   # the allowlist anticipates dependencies added by later epics
+# The allowlist from architecture §17.1. Copyleft licenses are denied by omission.
+allow = [
+  "MIT",
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "Zlib",
+  "Unicode-3.0",
+  "CC0-1.0",
+  "Unlicense",
+]
+
+[licenses.private]
+# Workspace crates are `publish = false`; their license is fixed by [workspace.package].
+ignore = true
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+allow-wildcard-paths = true   # internal path dependencies
+deny = []
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+# mangle-rs (Codeberg, pinned rev) is added here by roadmap M3.1.
+allow-git = []

@@ -79,9 +79,10 @@ Re-run every finding before you post it.
   (`docs/spec/*`, `docs/architecture.md`, `docs/testing.md`, `docs/cli.md`) >
   `CLAUDE.md`. When code and spec disagree, the PR must change the spec or the
   code. Silent divergence is a finding.
-- **CI:** none until roadmap M0.3 lands `.github/workflows/`. Until then, every
-  check in §2 is the CI, run locally. Once CI exists, also check that its jobs
-  actually ran (`gh pr checks`), not only that nothing failed.
+- **CI:** `.github/workflows/ci.yml` (roadmap M0.3) runs the jobs `lint`, `test (linux)`,
+  `wasm32 build` and `docs links`. Check that every job actually ran
+  (`gh pr checks`), not only that nothing failed. A workflow error can run no
+  jobs at all. Run §2 locally anyway: CI does not exercise the PR's claims.
 - **Toolchain:** `rust-toolchain.toml` pins an exact stable release with clippy,
   rustfmt and `wasm32-unknown-unknown`. Rustup applies it automatically inside
   the worktree. If a PR bumps it, that is its own PR (architecture §12.2).
@@ -144,30 +145,25 @@ for c in idef0-core idef0-mangle idef0-layout idef0-wasm; do
 done
 scripts/check-determinism-lints.sh                  # the bans still bite
 
-# wasm safety: no native crate in any wasm32 graph, and mangle and layout stay
-# independent. Silence means clean.
-for c in idef0-core idef0-mangle idef0-layout idef0-wasm; do
-  cargo tree -p $c --target wasm32-unknown-unknown -e normal --prefix none \
-    | grep -E '^(cc|tree-sitter[a-z-]*|tokio|mio|ring|idef0-ingest|idef0-server) ' \
-    | sed "s/^/STOP: $c pulls in /"
-done
-cargo tree -p idef0-mangle -e normal --prefix none | grep -q '^idef0-layout ' && echo "STOP: mangle depends on layout"
-cargo tree -p idef0-layout -e normal --prefix none | grep -q '^idef0-mangle ' && echo "STOP: layout depends on mangle"
+scripts/check-dependency-graph.sh   # wasm safety, no randomness in core/mangle/layout, mangle ⟂ layout
+cargo deny --locked check           # licenses, bans, advisories, sources
+python3 scripts/check-doc-links.py  # relative links and anchors in every tracked *.md
 ```
 
-- **The guard needs its positive control.** Silence proves nothing if the trees
-  are empty. Add `idef0-ingest.workspace = true` under `[dependencies]` in
-  `crates/idef0-core/Cargo.toml` and confirm `STOP: idef0-core pulls in
-  idef0-ingest`; add `idef0-layout.workspace = true` to idef0-mangle and confirm
-  `STOP: mangle depends on layout`. Restore with
-  `git checkout -- crates/ Cargo.lock`.
+- **The dependency audit needs its positive control.** A pass proves nothing if
+  the graphs are empty, so run it against a planted violation:
+  1. Add `idef0-ingest.workspace = true` under `[dependencies]` in
+     `crates/idef0-core/Cargo.toml`. The audit must fail and name `idef0-ingest`.
+  2. Add `idef0-layout.workspace = true` to idef0-mangle. The audit must fail on
+     "mangle and layout must stay independent".
+  3. Restore with `git checkout -- crates/ Cargo.lock`.
 
 - **Report counts.** Compare the test counts with any the PR claims. Rust has no
   skip, but `#[ignore]` tests do not run: list every new `#[ignore]` and its
   reason. A test gated behind a feature that the default run does not enable did
   not run either.
-- **Check the docs links** with the link checker once M0.3 adds it. Until then,
-  check by hand that every new relative link and `#anchor` in `docs/` resolves.
+- **Docs links:** `scripts/check-doc-links.py` covers relative links and anchors.
+  External URLs are not checked: open any new ones the PR adds.
 - **Clean up afterwards:** `git worktree remove --force $W && rm -rf $SCRATCH/target-N`.
 
 ### 3. Verify every claim that can be verified
