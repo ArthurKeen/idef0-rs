@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Check relative Markdown links and #anchors across the repository (roadmap M0.3).
 
-Every tracked *.md file is checked except the frozen archive (docs/archive/). For each relative
-link, the target file must exist, and a `#fragment` into a Markdown file must match a heading
+Every *.md file that git does not ignore (tracked or untracked) is checked except the frozen
+archive (docs/archive/). Inline links, with or without a title or <angle brackets>, and
+reference-style definitions (`[label]: path`) are checked. For each relative link, the target file must exist, and a `#fragment` into a Markdown file must match a heading
 slug (GitHub style: lowercase, punctuation stripped, spaces to '-', duplicates suffixed -1, -2...)
 or an explicit <a name|id="...">. Links inside code fences and inline code are ignored, as are
 absolute URLs (scheme:...). Standard library only.
@@ -19,7 +20,8 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXCLUDE_PREFIXES = ("docs/archive/",)
 
-LINK = re.compile(r"\]\(([^)\s]+)\)")
+LINK = re.compile(r"\]\(\s*<?([^)\s>]+)>?(?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*\)")
+REF_DEF = re.compile(r"^ {0,3}\[[^\]]+\]:\s*<?([^\s>]+)>?")
 HEADING = re.compile(r"^(#{1,6})\s+(.*?)\s*#*\s*$")
 HTML_ANCHOR = re.compile(r'<a\s+(?:name|id)="([^"]+)"')
 INLINE_CODE = re.compile(r"`[^`]*`")
@@ -31,7 +33,11 @@ def markdown_files() -> list[str]:
         ["git", "ls-files", "--cached", "--others", "--exclude-standard", "*.md"],
         cwd=ROOT, check=True, capture_output=True, text=True,
     ).stdout.split()
-    return sorted(f for f in out if not f.startswith(EXCLUDE_PREFIXES))
+    # A tracked file deleted from the working tree is not a link source.
+    return sorted(
+        f for f in out
+        if not f.startswith(EXCLUDE_PREFIXES) and os.path.exists(os.path.join(ROOT, f))
+    )
 
 
 def slug(text: str) -> str:
@@ -80,8 +86,12 @@ def main() -> int:
     for rel in markdown_files():
         src = os.path.join(ROOT, rel)
         for number, line in lines_outside_code(src):
-            for m in LINK.finditer(INLINE_CODE.sub("", line)):
-                url = m.group(1)
+            text = INLINE_CODE.sub("", line)
+            urls = [m.group(1) for m in LINK.finditer(text)]
+            ref = REF_DEF.match(text)
+            if ref:
+                urls.append(ref.group(1))
+            for url in urls:
                 if re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*:", url):
                     continue  # absolute URL (https:, mailto:, ...)
                 total += 1

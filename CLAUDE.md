@@ -56,7 +56,7 @@ idef0-rs is an AI-first, keyboard-driven IDEF0 (FIPS PUB 183) modeling tool writ
    - `cargo clippy --workspace --all-targets -- -D warnings`
    - `cargo test --workspace`
    - for core, mangle and layout: `cargo build -p <crate> --target wasm32-unknown-unknown`
-   - `scripts/check-determinism-lints.sh`, `scripts/check-dependency-graph.sh`, `cargo deny --locked check`, `python3 scripts/check-doc-links.py`
+   - `scripts/check-determinism-lints.sh`, `scripts/check-dependency-graph.sh`, `cargo deny --locked check`, `python3 scripts/check-doc-links.py` (`cargo deny` is a separate tool: `cargo install cargo-deny --locked --version ~0.20`, as pinned in [architecture §12.1](docs/architecture.md#121-workspace-manifest))
 
    CI (`.github/workflows/ci.yml`) runs the same checks on every PR.
 4. Never weaken a golden, snapshot or determinism test to make it pass. Update a snapshot only for an intended change, and say so in the commit.

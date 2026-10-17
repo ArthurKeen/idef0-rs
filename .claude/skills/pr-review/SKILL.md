@@ -156,7 +156,10 @@ python3 scripts/check-doc-links.py  # relative links and anchors in every tracke
      `crates/idef0-core/Cargo.toml`. The audit must fail and name `idef0-ingest`.
   2. Add `idef0-layout.workspace = true` to idef0-mangle. The audit must fail on
      "mangle and layout must stay independent".
-  3. Restore with `git checkout -- crates/ Cargo.lock`.
+  3. After each plant, run `cargo update -w --offline` before the audit. The audit
+     uses `--locked`, so a stale lock fails every graph with "could not resolve"
+     and never reaches the check being tested.
+  4. Restore with `git checkout -- crates/ Cargo.lock`.
 
 - **Report counts.** Compare the test counts with any the PR claims. Rust has no
   skip, but `#[ignore]` tests do not run: list every new `#[ignore]` and its
