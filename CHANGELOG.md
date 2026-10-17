@@ -16,4 +16,5 @@ policy in [docs/architecture.md §16](docs/architecture.md#16-release-and-versio
   `idef0-wasm` bans `std::time::{Instant, SystemTime}` and refuses a wasm32 build without
   `--cfg=web_sys_unstable_apis`.
 - New `idef0-ingest` crate. `idef0-server` is now a library plus a binary. The CLI binary is named `idef0`.
+- `/pr-review` Claude Code skill (`.claude/skills/pr-review/`), adapted from the maintainer's review skill to this repo's checks and rules.
 - v0.2 specification set, decisions D1–D20, fixtures and the FIPS PUB 183 reference copy (M0.1).
