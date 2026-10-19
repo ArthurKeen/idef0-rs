@@ -81,10 +81,11 @@ Re-run every finding before you post it.
   (`docs/spec/*`, `docs/architecture.md`, `docs/testing.md`, `docs/cli.md`) >
   `CLAUDE.md`. When code and spec disagree, the PR must change the spec or the
   code. Silent divergence is a finding.
-- **CI:** `.github/workflows/ci.yml` (roadmap M0.3) runs the jobs `lint`, `test (linux)`,
-  `wasm32 build` and `docs links`. Check that every job actually ran
-  (`gh pr checks`), not only that nothing failed. A workflow error can run no
-  jobs at all. Run §2 locally anyway: CI does not exercise the PR's claims.
+- **CI:** `.github/workflows/ci.yml` (roadmap M0.3, M0.4) runs the jobs `lint`,
+  `test (linux)`, `test (macos)`, `test (windows, MSVC)`, `msrv`, `wasm32 build`
+  and `docs links`. Check that every job actually ran (`gh pr checks`), not only
+  that nothing failed. A workflow error can run no jobs at all, and a billing
+  block fails every job with zero steps (the check-run annotation says why). Run §2 locally anyway: CI does not exercise the PR's claims.
 - **Toolchain:** `rust-toolchain.toml` pins an exact stable release with clippy,
   rustfmt and `wasm32-unknown-unknown`. Rustup applies it automatically inside
   the worktree. If a PR bumps it, that is its own PR (architecture §12.2).
