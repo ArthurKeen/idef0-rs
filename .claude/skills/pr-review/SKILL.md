@@ -72,7 +72,9 @@ Re-run every finding before you post it.
   Code. GitHub refuses `--approve` and `--request-changes` on your own PR, so post
   the user's PRs with `--comment`.
 - **The PR series follows the roadmap.** PR titles are `M<n>.<k>: …`, and commit
-  messages use the same prefix. Read the epic's row in `docs/roadmap.md`. Its
+  messages use the same prefix. Work no epic owns (tooling, skills, housekeeping)
+  uses `chore: …` (CLAUDE.md step 5); a `chore:` PR that changes product code or
+  a spec is a finding. Read the epic's row in `docs/roadmap.md`. Its
   **Spec** column lists the sections to read and its **Acceptance** column lists
   what must be proven. Spec-only PRs change `docs/`.
 - **Authority order:** `docs/NORTHSTAR.md` > `docs/PRD.md` and the spec set
@@ -242,7 +244,8 @@ These come from `CLAUDE.md`, `docs/NORTHSTAR.md`, the PRD decisions log and
   architecture §12.1 records policy, not a copy. `Cargo.lock` is committed. An
   MSRV or toolchain change is its own PR.
 - **Housekeeping.** `CHANGELOG.md` gains an entry under *Unreleased*. Commit
-  messages are `M<n>.<k>: …` and cite requirement IDs.
+  messages are `M<n>.<k>: …`, or `chore: …` for work no epic owns, and cite
+  requirement IDs.
 
 ### 5. `recheck` — after the author pushes
 
