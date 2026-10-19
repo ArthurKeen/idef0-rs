@@ -198,7 +198,7 @@ graph TD
 |---|---|
 | `idef0-core`, `idef0-mangle` and `idef0-layout` compile for `wasm32-unknown-unknown` with default features, do no file I/O, spawn no threads, and use no clock or randomness. | CI `wasm-build` job; §2.3; dependency audit (§15). |
 | `idef0-wasm` never depends on `idef0-ingest`, `idef0-server`, `tokio` or any crate that compiles C. | Dependency audit: `cargo tree --target wasm32-unknown-unknown -p idef0-wasm` must not contain `cc`, `tree-sitter*`, `tokio`, `mio`, `ring`. |
-| `idef0-mangle` and `idef0-layout` do not depend on each other. | `cargo tree` check. |
+| `idef0-mangle` and `idef0-layout` do not depend on each other, on any target and not even as a dev-dependency. Tests that need both live in `idef0-server` or `idef0-cli`. | Dependency audit (`scripts/check-dependency-graph.sh`, `cargo tree --target all -e normal,build,dev`). |
 | `idef0-ingest` and `idef0-server` are native-only. | They are excluded from the wasm32 build. |
 | Only `idef0-core` defines DTOs shared by wasm and server (`idef0_core::api`). | Code review. |
 
