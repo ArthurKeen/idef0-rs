@@ -257,55 +257,58 @@ pub struct PortRef { model: Option<ModelAbbrev>, node: NodeId, side: Side, code:
 ### 4.2 Model
 
 ```rust
-// (illustrative) idef0-core::model
+// (illustrative) idef0-core::model, as built in M1.2; layout hints arrive with the layout epics
 pub struct Model {
     meta: Meta,
-    concepts: BTreeMap<ConceptKey, Concept>,
-    diagrams: BTreeMap<NodeId, Arc<Diagram>>,     // structural sharing: a command clones only touched diagrams
-    hints: LayoutHints,                           // see layout.md; never raw coordinates (D5)
+    concepts: BTreeMap<ConceptKey, Concept>,      // the map key is the concept key
+    diagrams: BTreeMap<NodeId, Arc<Diagram>>,     // node-index order; structural sharing for commands
 }
 pub struct Meta { name: NonEmptyString, abbrev: ModelAbbrev, description: String, purpose: String,
-                  viewpoint: String, scope: Option<String>, author: Option<String>, project: Option<String>,
-                  profile: Profile, lang: LangTag }
-pub enum Profile { Extended, Fips183 }
+                  viewpoint: String, scope: Option<String>, context: Option<String>, author: Option<String>,
+                  project: Option<String>, lang: LangTag, profile: Profile, retired: BTreeSet<BoxKey> }
 
-pub struct Diagram {
-    node: NodeId, kind: DiagramKind, title: Option<String>,   // decomposition title derives from parent box name
-    description: String, cnumber: Option<CNumber>, status: Status,
+pub struct Diagram {                              // node = the map key; kind = DiagramKind::of(node)
+    title: Option<NonEmptyString>, status: Status, cnumber: Option<CNumber>,
+    author: Option<String>, date: Option<String>, description: Description,
     boxes: Vec<FunctionBox>,                      // order = box number (D5: semantic)
-    arrows: Vec<Arrow>, bundles: Vec<Bundle>, boundary: Vec<BoundaryPort>, notes: Vec<ModelNote>,
+    lineage: Option<u8>,                          // A-n only: index of the lineage box
+    arrows: Vec<Arrow>, notes: Vec<ModelNote>,    // declaration order fixes structural-id indexes
 }
 pub enum DiagramKind { Context, HigherContext, Decomposition }
 pub enum Status { Working, Draft, Recommended, Publication }
 
-pub struct FunctionBox {
-    key: BoxKey, name: NonEmptyString, description: String,
-    dre: Option<Dre>,                             // detail reference expression
-    call: Option<CallArrow>,                      // 0 or 1 call arrows (FR-CALL-01)
-}
-pub enum Dre { NodeNumber(NodeRef), CNumber(CNumber), Page(PageNo), ModelNote(NoteNo) }  // v1 emits the first two
+pub struct FunctionBox { key: BoxKey, name: NonEmptyString, provenance: Provenance,
+                         description: Description, call: Option<CallArrow> }   // 0 or 1 call (FR-CALL-01)
+pub enum Dre { NodeNumber(NodeRef), CNumber(CNumber) }   // derived: Model::dre(node), not stored
 
-pub struct Arrow {
-    id: ArrowId, src: Endpoint, dst: Endpoint,
-    concept: Option<ConceptKey>,                  // None only on an unlabeled rel=all branch (inherits trunk)
-    label: Option<String>,                        // display alias; must resolve to the same concept
-    tunnel: Tunnel, code: Option<CodeRef>, mech_kind: Option<MechKind>,
-}
-pub enum Endpoint { Box { key: BoxKey, side: Side, rank: u8 }, Boundary { side: Side, code: PortCode } }
-pub struct Bundle { trunk: ArrowId, kind: BundleKind /* Fork | Join */, branches: Vec<(ArrowId, Rel)> }
+pub struct Arrow { attrs: ArrowAttrs, shape: ArrowShape }
+pub enum ArrowShape { Plain { src: Endpoint, dst: Endpoint },
+                      Fork { src: Endpoint, fork: NonEmpty<Branch> },   // Branch { attrs, dst }
+                      Join { join: NonEmpty<Leaf>, dst: Endpoint } }    // Leaf { attrs, src }
+pub struct ArrowAttrs { concept: Option<ConceptRef>, label: Option<String>, key: Option<ArrowKey>,
+                        rel: Option<Rel>, tunnel: Option<Tunnel>, kind: Option<MechKind>, code: Option<String> }
+pub enum ConceptRef { Key(KeyRef<ConceptKey>), Text { text: String } }  // "@key", "ABBR/@key" | quoted label
+pub enum Endpoint { Box { key: BoxKey, side: Side, rank: u8 }, Boundary(BoundaryPort) }
+pub struct BoundaryPort { side: Side, code: PortCode }   // I1 | [I1]
 pub enum Rel { All, KindOf, PartOf }
 
 pub struct CallArrow {
-    targets: NonEmpty<CallTarget>,                // >1 only with a model note (FR-CALL-05)
-    note: Option<NoteNo>,
-    map: Vec<CallPortMap>,
+    targets: NonEmpty<KeyRef<BoxKey>>,            // "@verify-token" | "SEC/@verify-token" (D14); >1 needs a note
+    note: Option<u32>,
+    map: Vec<CallPortMap>,                        // "I1=I2"
 }
-pub struct CallTarget { model: Option<ModelAbbrev>, key: BoxKey }   // "@verify-token" | "SEC/@verify-token" (D14)
 // The FIPS reference label ("A5.2", "SEC/A2.1") is computed for display from the target's current node number.
 
-pub struct Concept { key: ConceptKey, name: NonEmptyString, description: String, synonyms: Vec<NonEmptyString>,
-                     kind_of: Vec<ConceptKey>, part_of: Vec<ConceptKey>, examples: Vec<String>, sources: Vec<DocRef> }
+pub struct ModelNote { number: u32, text: String, on: Vec<NoteTarget> }
+pub enum NoteTarget { Box(BoxKey), Call(BoxKey), Arrow { src, dst, occurrence: u32 }, ArrowKey(ArrowKey), Port(BoundaryPort) }
+
+pub struct Concept { name: NonEmptyString, provenance: Provenance, description: Description,
+                     synonyms: Vec<NonEmptyString>, kind_of: Vec<ConceptKey>, part_of: Vec<ConceptKey>,
+                     examples: Vec<String>, sources: Vec<String> }
 ```
+
+- The types hold what the DSL can state (metamodel §16.2). Derived values are computed, never stored: the diagram kind, box numbers, the DRE and structural arrow ids (§3.4, M1.4).
+- **Model JSON** (`GET /api/models/{abbrev}`, the wasm bridge) is the serde form of these types. Identifiers are their canonical strings (`"A21"`, `"MFG"`, `"@key"`, `"I1=I2"`), enums are snake_case, a box end is `{"box": "<key>", "side": "O", "rank": 1}` and a boundary end `{"side": "I", "icom": 1}` or `{"side": "I", "border": 1}`. A description with default provenance is a plain string. Default and empty fields are omitted, and unknown fields are ignored on input. Identical models give byte-identical JSON (D6); `crates/idef0-core/tests/model_json/` holds the round-trip fixtures.
 
 ### 4.3 Commands and patches
 

@@ -1,0 +1,249 @@
+{
+  "meta": {
+    "name": "Factory Development",
+    "abbrev": "FAC",
+    "purpose": "TBD (not shown in reference image)",
+    "viewpoint": "TBD (not shown in reference image)"
+  },
+  "concepts": {
+    "administrative-info": {
+      "name": "Administrative Information",
+      "description": "TBD"
+    },
+    "budget": {
+      "name": "Budget",
+      "description": "TBD"
+    },
+    "capa-plans": {
+      "name": "Corrective Action & Preventive Action Plans",
+      "description": "TBD"
+    },
+    "factory-specification": {
+      "name": "New or Updated Factory Specification",
+      "description": "TBD"
+    },
+    "goal": {
+      "name": "Goal",
+      "description": "TBD"
+    },
+    "manufacturing-software-system": {
+      "name": "Manufacturing Software System",
+      "description": "TBD"
+    },
+    "market-information": {
+      "name": "Market Information",
+      "description": "TBD"
+    },
+    "performance-result": {
+      "name": "Performance Result",
+      "description": "TBD"
+    },
+    "product-information": {
+      "name": "Product Information",
+      "description": "TBD"
+    },
+    "project-time": {
+      "name": "Project Time",
+      "description": "TBD"
+    },
+    "reference-factory-info": {
+      "name": "Reference Factory Information",
+      "description": "TBD"
+    },
+    "regulation": {
+      "name": "Regulation",
+      "description": "TBD"
+    },
+    "resource-information": {
+      "name": "Resource Information",
+      "description": "TBD"
+    },
+    "standard-operating-procedures": {
+      "name": "Standard Operating Procedures",
+      "description": "TBD"
+    }
+  },
+  "diagrams": {
+    "A-0": {
+      "title": "Develop/Update a Factory",
+      "boxes": [
+        {
+          "key": "develop-factory",
+          "name": "Develop/Update a Factory",
+          "description": "TBD"
+        }
+      ],
+      "arrows": [
+        {
+          "concept": "@market-information",
+          "src": {
+            "side": "I",
+            "icom": 1
+          },
+          "dst": {
+            "box": "develop-factory",
+            "side": "I",
+            "rank": 1
+          }
+        },
+        {
+          "concept": "@product-information",
+          "src": {
+            "side": "I",
+            "icom": 2
+          },
+          "dst": {
+            "box": "develop-factory",
+            "side": "I",
+            "rank": 2
+          }
+        },
+        {
+          "concept": "@resource-information",
+          "src": {
+            "side": "I",
+            "icom": 3
+          },
+          "dst": {
+            "box": "develop-factory",
+            "side": "I",
+            "rank": 3
+          }
+        },
+        {
+          "concept": "@budget",
+          "src": {
+            "side": "C",
+            "icom": 1
+          },
+          "dst": {
+            "box": "develop-factory",
+            "side": "C",
+            "rank": 1
+          }
+        },
+        {
+          "concept": "@project-time",
+          "src": {
+            "side": "C",
+            "icom": 2
+          },
+          "dst": {
+            "box": "develop-factory",
+            "side": "C",
+            "rank": 2
+          }
+        },
+        {
+          "concept": "@reference-factory-info",
+          "src": {
+            "side": "C",
+            "icom": 3
+          },
+          "dst": {
+            "box": "develop-factory",
+            "side": "C",
+            "rank": 3
+          }
+        },
+        {
+          "concept": "@administrative-info",
+          "src": {
+            "side": "C",
+            "icom": 4
+          },
+          "dst": {
+            "box": "develop-factory",
+            "side": "C",
+            "rank": 4
+          }
+        },
+        {
+          "concept": "@goal",
+          "src": {
+            "side": "C",
+            "icom": 5
+          },
+          "dst": {
+            "box": "develop-factory",
+            "side": "C",
+            "rank": 5
+          }
+        },
+        {
+          "concept": "@regulation",
+          "src": {
+            "side": "C",
+            "icom": 6
+          },
+          "dst": {
+            "box": "develop-factory",
+            "side": "C",
+            "rank": 6
+          }
+        },
+        {
+          "concept": "@factory-specification",
+          "src": {
+            "box": "develop-factory",
+            "side": "O",
+            "rank": 1
+          },
+          "dst": {
+            "side": "O",
+            "icom": 1
+          }
+        },
+        {
+          "concept": "@performance-result",
+          "src": {
+            "box": "develop-factory",
+            "side": "O",
+            "rank": 2
+          },
+          "dst": {
+            "side": "O",
+            "icom": 2
+          }
+        },
+        {
+          "concept": "@capa-plans",
+          "src": {
+            "box": "develop-factory",
+            "side": "O",
+            "rank": 3
+          },
+          "dst": {
+            "side": "O",
+            "icom": 3
+          }
+        },
+        {
+          "concept": "@standard-operating-procedures",
+          "src": {
+            "box": "develop-factory",
+            "side": "O",
+            "rank": 4
+          },
+          "dst": {
+            "side": "O",
+            "icom": 4
+          }
+        },
+        {
+          "concept": "@manufacturing-software-system",
+          "kind": "component",
+          "src": {
+            "side": "M",
+            "icom": 1
+          },
+          "dst": {
+            "box": "develop-factory",
+            "side": "M",
+            "rank": 1
+          }
+        }
+      ]
+    }
+  }
+}

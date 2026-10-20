@@ -10,11 +10,14 @@ publish.workspace      = true
 
 [dependencies]
 compact_str.workspace = true
+nonempty.workspace    = true
+serde.workspace       = true
 smallvec.workspace    = true
 thiserror.workspace   = true
 
 [dev-dependencies]
-proptest.workspace = true
+proptest.workspace   = true
+serde_json.workspace = true
 
 [lints]
 workspace = true
