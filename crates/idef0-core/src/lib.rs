@@ -5,3 +5,6 @@
 //! no threads, no clock, no randomness (D6, `docs/architecture.md` §2.2).
 //! Specification: `docs/spec/metamodel.md`.
 #![deny(clippy::unwrap_used)]
+
+pub mod id;
+pub mod profile;

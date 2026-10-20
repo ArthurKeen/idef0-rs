@@ -8,12 +8,14 @@ disallowed-types = [
   { path = "std::collections::HashSet", reason = "D6: iteration order; use BTreeSet" },
   { path = "std::time::Instant",        reason = "D6 and wasm32 panic; inject Clock" },
   { path = "std::time::SystemTime",     reason = "D6 and wasm32 panic; inject Clock" },
-  { path = "rand::rngs::ThreadRng",     reason = "NFR-DET-03: no random source" },
+  { path = "rand::rngs::ThreadRng",     reason = "NFR-DET-03: no random source", allow-invalid = true },
   { path = "getrandom::SysRng",         reason = "NFR-DET-03: no random source" },
 ]
 # Clippy cannot glob a crate (`rand::*`), so the entropy entry points of ulid 3, rand 0.10 and getrandom 0.4
 # are listed one by one; the CI dependency audit (§15) is the backstop. Entries for crates outside the
-# dependency tree are inert until the crate creeps in.
+# dependency tree are inert until the crate creeps in. The rand entries carry `allow-invalid`: rand
+# gates them behind default features, so they do not exist when a dependency (proptest, for
+# tests) disables those defaults. The probe still requires each one to fire.
 disallowed-methods = [
   { path = "std::time::Instant::now",    reason = "inject Clock" },
   { path = "std::time::SystemTime::now", reason = "inject Clock" },
@@ -29,14 +31,14 @@ disallowed-methods = [
   { path = "getrandom::fill_uninit", reason = "NFR-DET-03: no random source" },
   { path = "getrandom::u32",         reason = "NFR-DET-03: no random source" },
   { path = "getrandom::u64",         reason = "NFR-DET-03: no random source" },
-  { path = "rand::rng",          reason = "NFR-DET-03: no random source" },
-  { path = "rand::make_rng",     reason = "NFR-DET-03: no random source" },
-  { path = "rand::random",       reason = "NFR-DET-03: no random source" },
-  { path = "rand::random_iter",  reason = "NFR-DET-03: no random source" },
-  { path = "rand::random_range", reason = "NFR-DET-03: no random source" },
-  { path = "rand::random_bool",  reason = "NFR-DET-03: no random source" },
-  { path = "rand::random_ratio", reason = "NFR-DET-03: no random source" },
-  { path = "rand::fill",         reason = "NFR-DET-03: no random source" },
+  { path = "rand::rng",          reason = "NFR-DET-03: no random source", allow-invalid = true },
+  { path = "rand::make_rng",     reason = "NFR-DET-03: no random source", allow-invalid = true },
+  { path = "rand::random",       reason = "NFR-DET-03: no random source", allow-invalid = true },
+  { path = "rand::random_iter",  reason = "NFR-DET-03: no random source", allow-invalid = true },
+  { path = "rand::random_range", reason = "NFR-DET-03: no random source", allow-invalid = true },
+  { path = "rand::random_bool",  reason = "NFR-DET-03: no random source", allow-invalid = true },
+  { path = "rand::random_ratio", reason = "NFR-DET-03: no random source", allow-invalid = true },
+  { path = "rand::fill",         reason = "NFR-DET-03: no random source", allow-invalid = true },
   # NFR-DET-04: transcendental functions (and powi, documented as non-deterministic) may differ
   # between native libm and wasm32. sqrt and mul_add are correctly rounded and stay allowed.
   { path = "f32::sin",    reason = "NFR-DET-04" }, { path = "f64::sin",    reason = "NFR-DET-04" },

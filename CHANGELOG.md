@@ -7,6 +7,7 @@ policy in [docs/architecture.md §16](docs/architecture.md#16-release-and-versio
 ## [Unreleased]
 
 ### Added
+- Node and port references (roadmap M1.1; FR-ID-01, FR-ID-07, FR-ID-08): `idef0_core::id` parses and displays `NodeId`, `NodeRef` and `PortRef`, normalizes dotted (`A21.3`, `A0.3`) and FIPS (`A21I1`) input, and rejects box digits outside 1–7 (`E-NODE-01`). `idef0_core::profile::Profile` gives the profile box limit. Property tests cover round-trips and normalization; CI fixes `PROPTEST_RNG_SEED` per test job.
 - CI cross-OS and MSRV (roadmap M0.4): `test (macos)` on macos-14, `test (windows, MSVC)` on windows-2022, and `msrv`, which checks the native crates on the `rust-version` from `[workspace.package]` (1.90). `.gitattributes` keeps every checkout LF.
 - CI base (roadmap M0.3): `.github/workflows/ci.yml` with the `lint`, `test (linux)`, `wasm32 build` and `docs links` jobs. `deny.toml` holds the license allowlist (architecture §17.1); `scripts/check-dependency-graph.sh` is the dependency audit (architecture §2.2, §3.2), which also keeps `idef0-mangle` and `idef0-layout` independent on every target and for dev-dependencies; `scripts/check-doc-links.py` is the repo-wide link checker.
 - Workspace foundation (roadmap M0.2): `[workspace.package]`, the verified
