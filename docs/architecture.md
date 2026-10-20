@@ -363,11 +363,12 @@ pub fn apply(model: &Model, cmd: &Command, env: &mut Env<'_>) -> Result<(Model, 
 ### 4.4 Diagnostics and source spans
 
 ```rust
-// (illustrative) idef0-core::diag
-pub struct Diagnostic { code: Code, severity: Severity, subject: SubjectRef, message: String,
-                        detail: Option<Detail>, fix: Option<FixHint> }
-pub enum SubjectRef { Box(BoxKey), Diagram(NodeId), Edge(ArrowId), Port(PortRef), Concept(ConceptKey),
-                      CodeRef(CodeRef), DocRef(DocRef), Model(ModelAbbrev) }   // one kind per code (registry)
+// (illustrative) idef0-core::diag; detail, fix and span arrive with lints, rules and the parser
+pub struct Diagnostic { severity: Severity, subject: SubjectRef, code: Code, layer: Layer, message: String }
+pub enum SubjectRef { Diagram(NodeId), Box(BoxKey), Edge(EdgeRef), Concept(ConceptKey), Model }
+                                                  // one kind per code; order = canonical report order
+pub struct EdgeRef { diagram: NodeId, arrow: u32, part: Option<u32> }   // "A0:#3/1"; ArrowId from M1.4
+pub const E_CODES: &[CodeInfo];                   // core E codes = metamodel §18 (a test keeps them equal)
 
 pub struct SourceMap {                            // built by dsl::parse; kept beside the Model (SR-53)
     file: Utf8PathBuf,
@@ -376,6 +377,7 @@ pub struct SourceMap {                            // built by dsl::parse; kept b
 pub struct Span { start: u32, end: u32, line: u32, col: u32 }   // byte offsets; 1-based line/col (UTF-8 columns)
 ```
 
+- **Type check (M1.3):** `typecheck(&Model) -> Vec<Diagnostic>` reports the `E-*` codes a `Model` can contain: `E-ID-02`, `E-ID-04`, `E-NODE-02`, `E-NODE-03`, `E-TYPE-01`..`05`, `E-CALL-02` and `E-NOTE-01`. The types already exclude `E-ID-01`, `E-ID-03`, `E-ID-05`, `E-NODE-01` and `E-CALL-01` (validated abbrev and keys, concepts keyed by key, `NodeId` digits, calls stored on their box), so the parser reports those (M2.1). A boundary-to-boundary edge reports `E-TYPE-03` alone; a bad bundle trunk end is reported once, on the trunk.
 - The span map is rebuilt on every parse and updated by `format` after each write, so it always matches the bytes on disk.
 - SARIF results set `locations[].physicalLocation` from the span of the subject and `partialFingerprints["idef0ElementKey/v1"]`, a blake3 hash over the code, model abbrev and element key, defined in validation (the authority for the SARIF mapping). Because the fingerprint uses keys, not node numbers, alerts survive renumbering. The SARIF mapping is specified in [validation §output](spec/validation.md#8-diagnostics-output).
 

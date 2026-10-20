@@ -25,7 +25,9 @@ macro_rules! serde_via_str {
     )*};
 }
 
+pub mod diag;
 pub mod id;
 pub mod model;
 pub mod profile;
 pub mod text;
+pub mod typecheck;

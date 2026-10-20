@@ -836,6 +836,20 @@ mod tests {
         assert!(serde_json::from_str::<CallArrow>(r#"{"targets":[]}"#).is_err());
     }
 
+    // metamodel §3.4: `#n` picks the n-th arrow with the same endpoints; 0 is omitted.
+    #[test]
+    fn note_arrow_occurrence() {
+        let json = r#"{"arrow":{"src":{"side":"I","icom":1},"dst":{"box":"a","side":"I","rank":1},"occurrence":2}}"#;
+        let t: NoteTarget = serde_json::from_str(json).unwrap();
+        assert!(matches!(t, NoteTarget::Arrow { occurrence: 2, .. }));
+        assert_eq!(serde_json::to_string(&t).unwrap(), json);
+        let first =
+            r#"{"arrow":{"src":{"side":"I","icom":1},"dst":{"box":"a","side":"I","rank":1}}}"#;
+        let t: NoteTarget = serde_json::from_str(first).unwrap();
+        assert!(matches!(t, NoteTarget::Arrow { occurrence: 0, .. }));
+        assert_eq!(serde_json::to_string(&t).unwrap(), first);
+    }
+
     // SR-37: a box without a name, or with an empty one, does not deserialize.
     #[test]
     fn box_needs_a_name() {
