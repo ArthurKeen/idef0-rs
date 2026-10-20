@@ -79,12 +79,14 @@ disallowed-types = [
   { path = "std::collections::HashSet", reason = "D6: iteration order; use BTreeSet" },
   { path = "std::time::Instant",        reason = "D6 and wasm32 panic; inject Clock" },
   { path = "std::time::SystemTime",     reason = "D6 and wasm32 panic; inject Clock" },
-  { path = "rand::rngs::ThreadRng",     reason = "NFR-DET-03: no random source" },
+  { path = "rand::rngs::ThreadRng",     reason = "NFR-DET-03: no random source", allow-invalid = true },
   { path = "getrandom::SysRng",         reason = "NFR-DET-03: no random source" },
 ]
 # Clippy cannot glob a crate (`rand::*`), so the entropy entry points of ulid 3, rand 0.10 and getrandom 0.4
 # are listed one by one; the CI dependency audit (§15) is the backstop. Entries for crates outside the
-# dependency tree are inert until the crate creeps in.
+# dependency tree are inert until the crate creeps in. The rand entries carry `allow-invalid`: rand
+# gates them behind default features, so they do not exist when a dependency (proptest, for
+# tests) disables those defaults. The probe still requires each one to fire.
 disallowed-methods = [
   { path = "std::time::Instant::now",    reason = "inject Clock" },
   { path = "std::time::SystemTime::now", reason = "inject Clock" },
@@ -100,14 +102,14 @@ disallowed-methods = [
   { path = "getrandom::fill_uninit", reason = "NFR-DET-03: no random source" },
   { path = "getrandom::u32",         reason = "NFR-DET-03: no random source" },
   { path = "getrandom::u64",         reason = "NFR-DET-03: no random source" },
-  { path = "rand::rng",          reason = "NFR-DET-03: no random source" },
-  { path = "rand::make_rng",     reason = "NFR-DET-03: no random source" },
-  { path = "rand::random",       reason = "NFR-DET-03: no random source" },
-  { path = "rand::random_iter",  reason = "NFR-DET-03: no random source" },
-  { path = "rand::random_range", reason = "NFR-DET-03: no random source" },
-  { path = "rand::random_bool",  reason = "NFR-DET-03: no random source" },
-  { path = "rand::random_ratio", reason = "NFR-DET-03: no random source" },
-  { path = "rand::fill",         reason = "NFR-DET-03: no random source" },
+  { path = "rand::rng",          reason = "NFR-DET-03: no random source", allow-invalid = true },
+  { path = "rand::make_rng",     reason = "NFR-DET-03: no random source", allow-invalid = true },
+  { path = "rand::random",       reason = "NFR-DET-03: no random source", allow-invalid = true },
+  { path = "rand::random_iter",  reason = "NFR-DET-03: no random source", allow-invalid = true },
+  { path = "rand::random_range", reason = "NFR-DET-03: no random source", allow-invalid = true },
+  { path = "rand::random_bool",  reason = "NFR-DET-03: no random source", allow-invalid = true },
+  { path = "rand::random_ratio", reason = "NFR-DET-03: no random source", allow-invalid = true },
+  { path = "rand::fill",         reason = "NFR-DET-03: no random source", allow-invalid = true },
   # NFR-DET-04: transcendental functions (and powi, documented as non-deterministic) may differ
   # between native libm and wasm32. sqrt and mul_add are correctly rounded and stay allowed.
   { path = "f32::sin",    reason = "NFR-DET-04" }, { path = "f64::sin",    reason = "NFR-DET-04" },
@@ -140,7 +142,7 @@ disallowed-methods = [
 ```
 
 - `HashMap` used purely as an internal lookup table (never iterated into output) requires `#[expect(clippy::disallowed_types, reason = "...")]` at the use site, so every exception is visible in review.
-- Entries for crates outside a crate's dependency tree (`ulid`, `rand`, `getrandom`) are inert; they guard against the dependency creeping in. A misspelled path inside a crate that is present makes clippy warn that it "does not refer to a reachable function".
+- Entries for crates outside a crate's dependency tree (`ulid`, `rand`, `getrandom`) are inert; they guard against the dependency creeping in. A misspelled path inside a crate that is present makes clippy warn that it "does not refer to a reachable function". The `rand` entries carry `allow-invalid = true` because rand gates those items behind default features, which `proptest` (a dev-dependency) turns off; the probe, whose `rand` has its defaults, still requires each entry to fire.
 - **Verified at M0.2:** clippy resolves primitive inherent methods (`f64::sin`) in `disallowed-methods`. `scripts/check-determinism-lints.sh` is the negative test. It checks that the three strict files are identical, then runs clippy with that exact config on `scripts/determinism-probe/` (which depends on `ulid`, `rand` and `getrandom` with a committed `Cargo.lock`, so those paths resolve) and requires every `path` in the file to be reported and none to be unresolvable. A new ban therefore needs a new probe. CI runs it (M0.3).
 
 ---
@@ -237,15 +239,17 @@ pub struct BoxKey(CompactString);                // slug, explicit `key=` in the
 pub struct ConceptKey(CompactString);
 pub struct ArrowId(CompactString);               // explicit key, or structural "A0:1O1->2I1#0"; leaves "<trunk>/<i>"
 
-pub enum NodeId {                                 // Display: "A-0", "A-1", "A0", "A21"
+pub enum NodeId {                                 // Display: "A-0", "A-1", "A0", "A21"; .dotted(): "A2.1"
     Context { level: u8 },                        // A-0 = 0, A-1 = 1, ... (diagram node numbers)
-    Node(SmallVec<[u8; 8]>),                      // box-number path; [] = A0, [2,1] = A21; digits 1..=max per profile
-}
+    Node(SmallVec<[u8; 8]>),                      // box-number path; [] = A0, [2,1] = A21; digits 1..=7 in every profile
+}                                                 // profile limit (6 under fips183): NodeId::fits_profile, box_count_high
 pub struct NodeRef { model: Option<ModelAbbrev>, node: NodeId, sheet: Option<SheetSuffix> }   // "SEC/A21", "A321F"
 pub enum   Side { I, C, O, M }
 pub enum   PortCode { Icom(u8), Border(u8) }      // I2 | [I1] (uncoded border tunnel, local ordinal)
-pub struct PortRef { node: NodeRef, side: Side, code: PortCode }   // canonical "A21/I1"; FIPS "A21I1" accepted
+pub struct PortRef { model: Option<ModelAbbrev>, node: NodeId, side: Side, code: PortCode }   // canonical "A21/I1"; .fips(): "A21I1"
 ```
+
+- Parsing (`FromStr`) is profile-independent and normalizes dotted and FIPS input (metamodel §3.6); `Display` writes the canonical form. A port has no page suffix, so `PortRef` holds a `NodeId`, not a `NodeRef`. `@key` and environment-box (`A-n.k`) references are typed errors until box keys land (M1.4).
 
 - `NonEmptyString` makes "a box or concept without a name" unrepresentable: `FunctionBox::name` and `Concept::name` have that type, so construction without a name fails to compile, and deserialization of `""` fails with a typed error (SR-37).
 - `BoxKey` minting (slug of name, `-2`, `-3` on collision) goes through `KeyMinter` (§4.6). Parsing a file without keys derives them deterministically in declaration order ([metamodel](spec/metamodel.md#3-identity-fr-id)).

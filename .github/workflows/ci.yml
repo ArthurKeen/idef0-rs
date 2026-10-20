@@ -55,6 +55,8 @@ jobs:
     name: test (linux)
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    env:
+      PROPTEST_RNG_SEED: "1"   # fixed per job (docs/testing.md §2)
     steps:
       - uses: actions/checkout@v7
       - name: Install the pinned toolchain (rust-toolchain.toml)
@@ -71,6 +73,8 @@ jobs:
     name: test (macos)
     runs-on: macos-14
     timeout-minutes: 25
+    env:
+      PROPTEST_RNG_SEED: "2"   # fixed per job (docs/testing.md §2)
     steps:
       - uses: actions/checkout@v7
       - name: Install the pinned toolchain (rust-toolchain.toml)
@@ -89,6 +93,8 @@ jobs:
     defaults:
       run:
         shell: bash
+    env:
+      PROPTEST_RNG_SEED: "3"   # fixed per job (docs/testing.md §2)
     steps:
       - uses: actions/checkout@v7
       - name: Install the pinned toolchain (rust-toolchain.toml)
