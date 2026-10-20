@@ -1,0 +1,5 @@
+# LF in every checkout, Windows included: snapshots and goldens are compared byte for byte
+# (NFR-DET-01), and the test-windows job must see the same bytes as Linux (architecture §15.1).
+* text=auto eol=lf
+*.pdf binary
+*.png binary

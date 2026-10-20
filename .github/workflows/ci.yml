@@ -1,6 +1,6 @@
-# Pull-request pipeline, base jobs (roadmap M0.3; docs/architecture.md §15.1).
-# Cross-OS and MSRV jobs arrive in M0.4; wasm-bindgen-test, trunk, e2e, bench-gate and dogfood
-# arrive with the epics that create what they test.
+# Pull-request pipeline (docs/architecture.md §15.1): base jobs (roadmap M0.3), cross-OS and MSRV
+# jobs (M0.4). wasm-bindgen-test, trunk, e2e, bench-gate and dogfood arrive with the epics that
+# create what they test.
 name: CI
 
 on:
@@ -65,6 +65,60 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: cargo test
         run: cargo test --locked --workspace
+
+  # The native crates are every crate except idef0-wasm, which ships only as wasm32.
+  test-macos:
+    name: test (macos)
+    runs-on: macos-14
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install the pinned toolchain (rust-toolchain.toml)
+        run: |
+          channel="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' rust-toolchain.toml)"
+          rustup toolchain install "$channel" --profile minimal
+          rustc --version
+      - uses: Swatinem/rust-cache@v2
+      - name: cargo test (native crates)
+        run: cargo test --locked --workspace --exclude idef0-wasm
+
+  test-windows:
+    name: test (windows, MSVC)
+    runs-on: windows-2022
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install the pinned toolchain (rust-toolchain.toml)
+        run: |
+          channel="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' rust-toolchain.toml)"
+          rustup toolchain install "$channel" --profile minimal
+          rustc --version --verbose | grep -E '^(rustc|host)'
+      - uses: Swatinem/rust-cache@v2
+      - name: cargo test (native crates)
+        run: cargo test --locked --workspace --exclude idef0-wasm
+
+  msrv:
+    name: msrv (rust-version in Cargo.toml)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install the MSRV toolchain (`rust-version` in [workspace.package])
+        run: |
+          msrv="$(sed -n 's/^rust-version *= *"\(.*\)"/\1/p' Cargo.toml)"
+          test -n "$msrv" || { echo "no rust-version in Cargo.toml" >&2; exit 1; }
+          echo "MSRV=$msrv" >> "$GITHUB_ENV"
+          rustup toolchain install "$msrv" --profile minimal
+          rustc "+$msrv" --version
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: msrv
+      # `+$MSRV` overrides rust-toolchain.toml for this command only.
+      - name: cargo check on the MSRV (native crates)
+        run: cargo "+$MSRV" check --locked --workspace --all-targets --exclude idef0-wasm
 
   wasm:
     name: wasm32 build
