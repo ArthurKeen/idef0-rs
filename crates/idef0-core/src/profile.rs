@@ -1,10 +1,15 @@
 //! Conformance profiles (D8, D11; `docs/spec/metamodel.md` §1.2).
 
+use serde::{Deserialize, Serialize};
+
 /// The conformance profile a model is validated under.
 ///
 /// `Extended` is the default and allows up to 7 boxes per non-context diagram
 /// **[Deviation]**; `Fips183` keeps the FIPS limit of 6 (§3.3.3-4).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize,
+)]
+#[serde(rename_all = "snake_case")]
 pub enum Profile {
     /// idef0-rs default: extensions on, 3–7 boxes per diagram.
     #[default]

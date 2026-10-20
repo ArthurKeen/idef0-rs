@@ -11,6 +11,7 @@ use core::fmt;
 use core::str::FromStr;
 
 use compact_str::CompactString;
+use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 
 use crate::profile::Profile;
@@ -339,7 +340,7 @@ impl FromStr for NodeRef {
 }
 
 /// An ICOM side (§2.2): Input, Control, Output, Mechanism. Ordered I, C, O, M.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum Side {
     /// Input.
     I,
@@ -352,7 +353,8 @@ pub enum Side {
 }
 
 impl Side {
-    const fn letter(self) -> char {
+    /// The side's letter: `I`, `C`, `O` or `M`.
+    pub const fn letter(self) -> char {
         match self {
             Self::I => 'I',
             Self::C => 'C',
@@ -361,7 +363,8 @@ impl Side {
         }
     }
 
-    const fn from_letter(b: u8) -> Option<Self> {
+    /// The side for an ASCII letter `I`, `C`, `O` or `M`.
+    pub const fn from_letter(b: u8) -> Option<Self> {
         match b {
             b'I' => Some(Self::I),
             b'C' => Some(Self::C),
@@ -372,8 +375,9 @@ impl Side {
     }
 }
 
-/// The code of a port on one side of a box.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+/// The code of a port on one side of a box. In JSON, `{"icom": 2}` or `{"border": 1}`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum PortCode {
     /// An ICOM code rank (`I2` is rank 2), 1 or more.
     Icom(u8),
@@ -507,6 +511,8 @@ impl fmt::Display for Fips<'_> {
         self.0.write(f, true)
     }
 }
+
+serde_via_str!(ModelAbbrev, NodeId, NodeRef, PortRef);
 
 const fn is_box_number(k: u8) -> bool {
     k >= 1 && k <= MAX_BOX_DIGIT

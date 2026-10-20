@@ -1,0 +1,407 @@
+{
+  "meta": {
+    "name": "Order Fulfillment",
+    "abbrev": "ORD",
+    "description": "How an order becomes a shipment and an invoice.",
+    "purpose": "Show the order flow for the fulfillment team.",
+    "viewpoint": "Fulfillment lead",
+    "scope": "From order receipt to invoice; payment collection is out of scope.",
+    "context": "Part of the sales operation.",
+    "author": "A. Author",
+    "project": "Fixtures",
+    "lang": "en-GB",
+    "profile": "fips183",
+    "retired": [
+      "legacy-ship",
+      "old-check"
+    ]
+  },
+  "concepts": {
+    "clerk": {
+      "name": "Order Clerk",
+      "description": "A person who checks orders."
+    },
+    "goods": {
+      "name": "Goods",
+      "description": "Products held in stock."
+    },
+    "invoice": {
+      "name": "Invoice",
+      "description": "A request for payment."
+    },
+    "order": {
+      "name": "Order",
+      "description": {
+        "text": "A request from a customer to buy goods.",
+        "origin": "prd",
+        "source": "PRD.md#orders"
+      },
+      "synonyms": [
+        "Purchase Order"
+      ],
+      "examples": [
+        "PO-1001"
+      ],
+      "sources": [
+        "PRD.md#orders"
+      ]
+    },
+    "order-line": {
+      "name": "Order Line",
+      "description": "A portion of an order for one product.",
+      "part_of": [
+        "order"
+      ]
+    },
+    "policy": {
+      "name": "Order Policy",
+      "description": "A rule set that governs which orders are accepted."
+    },
+    "rush-order": {
+      "name": "Rush Order",
+      "origin": "llm",
+      "source": "proposal P0003",
+      "description": "An order that ships the same day.",
+      "kind_of": [
+        "order"
+      ]
+    },
+    "shipment": {
+      "name": "Shipment",
+      "description": "Goods sent to a customer."
+    }
+  },
+  "diagrams": {
+    "A-0": {
+      "title": "Fulfill Orders",
+      "boxes": [
+        {
+          "key": "fulfill-orders",
+          "name": "Fulfill Orders",
+          "description": "Turns accepted orders into shipments and invoices."
+        }
+      ],
+      "arrows": [
+        {
+          "concept": "@order",
+          "src": {
+            "side": "I",
+            "icom": 1
+          },
+          "dst": {
+            "box": "fulfill-orders",
+            "side": "I",
+            "rank": 1
+          }
+        },
+        {
+          "concept": "@policy",
+          "src": {
+            "side": "C",
+            "icom": 1
+          },
+          "dst": {
+            "box": "fulfill-orders",
+            "side": "C",
+            "rank": 1
+          }
+        },
+        {
+          "concept": "@shipment",
+          "src": {
+            "box": "fulfill-orders",
+            "side": "O",
+            "rank": 1
+          },
+          "dst": {
+            "side": "O",
+            "icom": 1
+          }
+        },
+        {
+          "concept": "@clerk",
+          "kind": "resource",
+          "src": {
+            "side": "M",
+            "icom": 1
+          },
+          "dst": {
+            "box": "fulfill-orders",
+            "side": "M",
+            "rank": 1
+          }
+        }
+      ]
+    },
+    "A-1": {
+      "title": "Run the Sales Operation",
+      "boxes": [
+        {
+          "key": "plan-sales",
+          "name": "Plan Sales"
+        },
+        {
+          "key": "fulfill-orders",
+          "name": "Fulfill Orders"
+        },
+        {
+          "key": "supply-goods",
+          "name": "Supply Goods"
+        }
+      ],
+      "lineage": 1,
+      "arrows": [
+        {
+          "concept": "@goods",
+          "src": {
+            "box": "supply-goods",
+            "side": "O",
+            "rank": 1
+          },
+          "dst": {
+            "box": "fulfill-orders",
+            "side": "M",
+            "rank": 1
+          }
+        }
+      ]
+    },
+    "A0": {
+      "status": "draft",
+      "cnumber": "AK15(AK14)",
+      "author": "A. Author",
+      "date": "2026-10-20",
+      "description": {
+        "text": "Orders are checked, then shipped and billed.",
+        "origin": "llm",
+        "source": "proposal P0001"
+      },
+      "boxes": [
+        {
+          "key": "check-order",
+          "name": "Check Order",
+          "description": "Accepts orders that meet the order policy."
+        },
+        {
+          "key": "ship-order",
+          "name": "Ship Order",
+          "call": {
+            "targets": [
+              "@pack-goods",
+              "WH/@pack-goods"
+            ],
+            "note": 1,
+            "map": [
+              "I1=I1",
+              "C1=C2"
+            ]
+          }
+        },
+        {
+          "key": "bill-customer",
+          "name": "Bill Customer",
+          "origin": "prd",
+          "source": "PRD.md#billing"
+        }
+      ],
+      "arrows": [
+        {
+          "concept": "@order",
+          "key": "order-feed",
+          "src": {
+            "side": "I",
+            "icom": 1
+          },
+          "dst": {
+            "box": "check-order",
+            "side": "I",
+            "rank": 1
+          }
+        },
+        {
+          "concept": "@policy",
+          "src": {
+            "side": "C",
+            "icom": 1
+          },
+          "dst": {
+            "box": "check-order",
+            "side": "C",
+            "rank": 1
+          }
+        },
+        {
+          "concept": "@policy",
+          "tunnel": "box",
+          "src": {
+            "side": "C",
+            "icom": 1
+          },
+          "dst": {
+            "box": "bill-customer",
+            "side": "C",
+            "rank": 1
+          }
+        },
+        {
+          "concept": "@rush-order",
+          "src": {
+            "side": "C",
+            "border": 1
+          },
+          "dst": {
+            "box": "ship-order",
+            "side": "C",
+            "rank": 1
+          }
+        },
+        {
+          "concept": "@clerk",
+          "kind": "code",
+          "code": "orders::check::validate",
+          "src": {
+            "side": "M",
+            "icom": 1
+          },
+          "dst": {
+            "box": "check-order",
+            "side": "M",
+            "rank": 1
+          }
+        },
+        {
+          "concept": "@order",
+          "src": {
+            "box": "check-order",
+            "side": "O",
+            "rank": 1
+          },
+          "fork": [
+            {
+              "dst": {
+                "box": "ship-order",
+                "side": "I",
+                "rank": 1
+              }
+            },
+            {
+              "concept": "@order-line",
+              "label": "Order Line",
+              "rel": "part_of",
+              "dst": {
+                "box": "bill-customer",
+                "side": "I",
+                "rank": 1
+              }
+            }
+          ]
+        },
+        {
+          "concept": "@shipment",
+          "join": [
+            {
+              "src": {
+                "box": "ship-order",
+                "side": "O",
+                "rank": 1
+              }
+            },
+            {
+              "concept": {
+                "text": "Delivery Note"
+              },
+              "rel": "all",
+              "src": {
+                "box": "bill-customer",
+                "side": "O",
+                "rank": 2
+              }
+            }
+          ],
+          "dst": {
+            "side": "O",
+            "icom": 1
+          }
+        },
+        {
+          "concept": "@invoice",
+          "src": {
+            "box": "bill-customer",
+            "side": "O",
+            "rank": 1
+          },
+          "dst": {
+            "side": "O",
+            "border": 1
+          }
+        }
+      ],
+      "notes": [
+        {
+          "number": 1,
+          "text": "Ship from the main warehouse unless the order is a rush order.",
+          "on": [
+            {
+              "call": "ship-order"
+            },
+            {
+              "box": "ship-order"
+            },
+            {
+              "arrow": {
+                "src": {
+                  "side": "C",
+                  "icom": 1
+                },
+                "dst": {
+                  "box": "check-order",
+                  "side": "C",
+                  "rank": 1
+                }
+              }
+            },
+            {
+              "arrow": {
+                "src": {
+                  "side": "C",
+                  "icom": 1
+                },
+                "dst": {
+                  "box": "bill-customer",
+                  "side": "C",
+                  "rank": 1
+                },
+                "occurrence": 1
+              }
+            },
+            {
+              "arrow_key": "order-feed"
+            },
+            {
+              "port": {
+                "side": "C",
+                "border": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "A3": {
+      "boxes": [
+        {
+          "key": "price-lines",
+          "name": "Price Lines"
+        },
+        {
+          "key": "apply-tax",
+          "name": "Apply Tax"
+        },
+        {
+          "key": "issue-invoice",
+          "name": "Issue Invoice"
+        }
+      ]
+    }
+  }
+}
