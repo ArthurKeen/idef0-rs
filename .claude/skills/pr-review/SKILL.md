@@ -58,7 +58,9 @@ Re-run every finding before you post it.
 
 ## This repo's shape — read before anything
 
-- **Repo:** `ArthurKeen/idef0-rs`, **private**. The base branch is **`main`**.
+- **Repo:** `ArthurKeen/idef0-rs`, **public** (since 2026-10-19). The base branch is **`main`**.
+  Everything in a PR, its history and its review comments is world-readable, so a
+  file whose license does not allow redistribution is a finding.
   Pass `--repo` to every `gh` call.
 - **Merging:** merge commits, squash and rebase are all allowed, and head branches
   are not auto-deleted. PRs so far land as **merge commits** (#1), which keeps

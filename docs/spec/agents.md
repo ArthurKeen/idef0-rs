@@ -5,7 +5,7 @@
 | Status | DRAFT v0.2 (2026-10-15) |
 | Part of | idef0-rs spec set; index: [docs/PRD.md](../PRD.md) |
 | Normative references | FIPS PUB 183 (IDEF0); JSON Schema 2020-12; Model Context Protocol specification (revision pinned in [architecture](../architecture.md#12-dependencies-and-toolchain-sr-32)); Anthropic Messages API |
-| Informative references | Presley & Liles, *The Use of IDEF0 for the Design and Specification of Methodologies*, ARRI, UT Arlington, local copy [ierc95.pdf](../research/ierc95.pdf) (cited as **[ierc95]**); FIPS 183 Annex C (Kit Cycle), *informative* |
+| Informative references | Presley & Liles, *The Use of IDEF0 for the Design and Specification of Methodologies*, ARRI, UT Arlington (not redistributed here: its copyright stays with the authors; cited as **[ierc95]**); FIPS 183 Annex C (Kit Cycle), *informative* |
 | Scope | Contract cards, scaffolding, AI decomposition proposals, the MCP server, proposal acceptance (D15), and the threat model and privacy controls for agent and LLM paths. |
 
 Tagging, scanning, sync and the trace lockfile are in [ingestion.md](ingestion.md). Localhost server hardening (Host allowlist, Origin checks, per-launch token, CSRF, DNS rebinding, WebSocket hijacking) is owned by [architecture §Server security](../architecture.md#8-server-security-sr-24). This document only refers to it.

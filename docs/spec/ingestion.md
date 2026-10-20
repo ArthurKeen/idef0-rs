@@ -5,7 +5,7 @@
 | Status | DRAFT v0.2 (2026-10-15) |
 | Part of | idef0-rs spec set; index: [docs/PRD.md](../PRD.md) |
 | Normative references | FIPS PUB 183 (IDEF0), local copy [fipspub183.pdf](../research/fipspub183.pdf); CommonMark 0.31; BLAKE3; JSON Schema 2020-12; tree-sitter grammar repositories (pinned revisions, see [architecture](../architecture.md#12-dependencies-and-toolchain-sr-32)) |
-| Informative references | Presley & Liles, *The Use of IDEF0 for the Design and Specification of Methodologies*, ARRI, UT Arlington, local copy [ierc95.pdf](../research/ierc95.pdf) (cited as **[ierc95]**) |
+| Informative references | Presley & Liles, *The Use of IDEF0 for the Design and Specification of Methodologies*, ARRI, UT Arlington (not redistributed here: its copyright stays with the authors; cited as **[ierc95]**) |
 | Scope | Workspace config, PRD and code tagging standards, the scanner, sync and rename rewriting, the trace lockfile, watch mode, the server-side search index, and import/export (FR-IO). |
 
 Contract cards, scaffolds, AI proposals, the MCP server and the threat model live in [agents.md](agents.md). Terms (DocRef, CodeRef, RenameMap, SyncPlan, Used At) are defined in the [glossary](../glossary.md).

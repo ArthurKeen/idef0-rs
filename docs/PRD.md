@@ -7,7 +7,7 @@
 | Audience | Engineers and Claude Code sessions implementing idef0-rs |
 | Authority | [NORTHSTAR](NORTHSTAR.md) > this PRD and the spec set > [CLAUDE.md](../CLAUDE.md) (D13) |
 | Normative reference | **FIPS PUB 183**, *Integration Definition for Function Modeling (IDEF0)*, NIST, 21 Dec 1993 ([local copy](research/fipspub183.pdf)). Citations: "FIPS §3.3.3-8" means section 3.3.3, rule 8. Annexes A–C are *informative*. |
-| Informative references | [Wikipedia: IDEF0](https://en.wikipedia.org/wiki/IDEF0). A. Presley & D. Liles, *The Use of IDEF0 for the Design and Specification of Methodologies*, UT Arlington ARRI ([local copy](research/ierc95.pdf)). Mangle docs (mangle.readthedocs.io); `mangle-rs` (codeberg.org/TauCeti/mangle-rs). |
+| Informative references | [Wikipedia: IDEF0](https://en.wikipedia.org/wiki/IDEF0). A. Presley & D. Liles, *The Use of IDEF0 for the Design and Specification of Methodologies*, UT Arlington ARRI (not redistributed here: its copyright stays with the authors). Mangle docs (mangle.readthedocs.io); `mangle-rs` (codeberg.org/TauCeti/mangle-rs). |
 | Standards status | Per Wikipedia (not verifiable from repo sources), FIPS 183 was withdrawn as a federal standard in 2008. The standards based on it are IEEE Std 1320.1-1998 and ISO/IEC/IEEE 31320-1. FIPS 183 is freely available and is this project's baseline (D11). Diffing against 31320-1 is open question Q-11. |
 
 This document is the **entry point**. It states the problem, the users, the journeys, the scope, the decisions and the risks, and it indexes every requirement family to the spec that defines it. Requirement IDs are stable across documents.
