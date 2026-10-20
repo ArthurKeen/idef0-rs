@@ -19,3 +19,6 @@ policy in [docs/architecture.md §16](docs/architecture.md#16-release-and-versio
 - New `idef0-ingest` crate. `idef0-server` is now a library plus a binary. The CLI binary is named `idef0`.
 - `/pr-review` Claude Code skill (`.claude/skills/pr-review/`), adapted from the maintainer's review skill to this repo's checks and rules.
 - v0.2 specification set, decisions D1–D20, fixtures and the FIPS PUB 183 reference copy (M0.1).
+
+### Removed
+- `docs/research/ierc95.pdf` (Presley & Liles). It is still cited as an informative reference, but the file is not redistributed now that the repository is public.
