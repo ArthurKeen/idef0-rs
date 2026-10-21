@@ -50,15 +50,15 @@ fn constructs() {
     let order: Vec<String> = m.diagrams.keys().map(ToString::to_string).collect();
     assert_eq!(
         order,
-        ["A-0", "A-1", "A0", "A3"],
+        ["A-1", "A-0", "A0", "A3"],
         "diagrams in FIPS node-index order"
     );
     let kinds: Vec<DiagramKind> = m.diagrams.keys().map(DiagramKind::of).collect();
     assert_eq!(
         kinds,
         [
-            DiagramKind::Context,
             DiagramKind::HigherContext,
+            DiagramKind::Context,
             DiagramKind::Decomposition,
             DiagramKind::Decomposition
         ]

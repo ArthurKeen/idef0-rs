@@ -114,9 +114,10 @@ impl fmt::Display for ModelAbbrev {
 
 /// A node number (metamodel §3.2): a context diagram `A-n`, or a box path from `A0`.
 ///
-/// The derived order lists context diagrams first, then nodes in FIPS node-index order:
-/// `A0`, `A1`, `A11`, `A12`, `A2`, …
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+/// The order is the canonical diagram order of metamodel §14 (FR-WS-07): higher context
+/// diagrams from the highest down, then `A-0`, then nodes in FIPS node-index order:
+/// `A-2`, `A-1`, `A-0`, `A0`, `A1`, `A11`, `A12`, `A2`, …
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum NodeId {
     /// Context diagram `A-<level>`: `A-0` is the context diagram, `A-1`, `A-2`, … are higher
     /// context diagrams (§3.4.2–3.4.3).
@@ -126,6 +127,24 @@ pub enum NodeId {
     },
     /// Box path below `A0`: `[]` is `A0` (the top box), `[2, 1]` is `A21`. Each digit is 1–7.
     Node(SmallVec<[u8; 8]>),
+}
+
+impl Ord for NodeId {
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering {
+        match (self, other) {
+            // Higher levels first: A-2 < A-1 < A-0.
+            (Self::Context { level: a }, Self::Context { level: b }) => b.cmp(a),
+            (Self::Context { .. }, Self::Node(_)) => core::cmp::Ordering::Less,
+            (Self::Node(_), Self::Context { .. }) => core::cmp::Ordering::Greater,
+            (Self::Node(a), Self::Node(b)) => a.cmp(b),
+        }
+    }
+}
+
+impl PartialOrd for NodeId {
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl NodeId {
@@ -966,17 +985,17 @@ mod tests {
         }
     }
 
-    // Ordering is FIPS node-index order, so BTreeMap<NodeId, _> iterates deterministically
-    // in the order a node index lists diagrams (D6).
+    // FR-WS-07: the canonical diagram order, so BTreeMap<NodeId, _> iterates the way the
+    // formatter writes diagrams (D6).
     #[test]
     fn node_index_order() {
-        let mut nodes: Vec<NodeId> = ["A2", "A11", "A-0", "A1", "A0", "A12", "A-1"]
+        let mut nodes: Vec<NodeId> = ["A2", "A11", "A-0", "A1", "A0", "A12", "A-1", "A-3"]
             .into_iter()
             .map(node)
             .collect();
         nodes.sort();
         let sorted: Vec<String> = nodes.iter().map(ToString::to_string).collect();
-        assert_eq!(sorted, ["A-0", "A-1", "A0", "A1", "A11", "A12", "A2"]);
+        assert_eq!(sorted, ["A-3", "A-1", "A-0", "A0", "A1", "A11", "A12", "A2"]);
     }
 
     #[test]

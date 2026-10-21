@@ -1,12 +1,12 @@
+box A-1 @plan-sales
+box A-1 @fulfill-orders
+box A-1 @supply-goods
+arrow A-1:3O1->0M1#0
 box A-0 @fulfill-orders
 arrow A-0:I1->0I1#0
 arrow A-0:C1->0C1#0
 arrow A-0:0O1->O1#0
 arrow A-0:M1->0M1#0
-box A-1 @plan-sales
-box A-1 @fulfill-orders
-box A-1 @supply-goods
-arrow A-1:3O1->0M1#0
 box A0 @check-order
 box A0 @ship-order
 box A0 @bill-customer
