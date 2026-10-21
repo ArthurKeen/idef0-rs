@@ -1,0 +1,7 @@
+---
+source: crates/idef0-core/tests/dsl.rs
+expression: "format!(\"{code}: {errors} error(s)\\n{}\", report.join(\"\\n\"))"
+input_file: fixtures/invalid/E-CALL-01/missing-box.idef0
+---
+E-CALL-01: 1 error(s)
+8:8: error[E-CALL-01] box @box-4: call on box 4, which is not on A0

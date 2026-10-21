@@ -1,0 +1,81 @@
+idef0 0.2
+# Valid fixture: every construct the parser lowers. Must equal
+# crates/idef0-core/tests/model_json/constructs.json once parsed (roadmap M2.1).
+model "Order Fulfillment" {
+  abbrev "ORD"
+  description """
+    How an order becomes a shipment and an invoice.
+    """
+  purpose "Show the order flow for the fulfillment team."
+  viewpoint "Fulfillment lead"
+  scope "From order receipt to invoice; payment collection is out of scope."
+  context "Part of the sales operation."
+  author "A. Author"
+  project "Fixtures"
+  lang "en-GB"
+  profile fips183
+  retired { old-check legacy-ship }
+}
+
+concept order "Order" {
+  description "A request from a customer to buy goods." origin=prd source="PRD.md#orders"
+  synonyms "Purchase Order"
+  example "PO-1001"
+  source "PRD.md#orders"
+}
+concept order-line "Order Line" { description "A portion of an order for one product." part_of order }
+concept rush-order "Rush Order" origin=llm source="proposal P0003" {
+  description "An order that ships the same day."
+  kind_of order
+}
+concept policy "Order Policy" { description "A rule set that governs which orders are accepted." }
+concept clerk "Order Clerk" { description "A person who checks orders." }
+concept shipment "Shipment" { description "Goods sent to a customer." }
+concept invoice "Invoice" { description "A request for payment." }
+concept goods "Goods" { description "Products held in stock." }
+
+diagram A-1 "Run the Sales Operation" {
+  box 1 "Plan Sales"
+  box 0  # the lineage box: the A-0 top box, named there
+  box 3 "Supply Goods"
+  arrow @goods : 3O1 -> 0M1
+}
+
+diagram A-0 "Fulfill Orders" {
+  box 0 "Fulfill Orders" { description "Turns accepted orders into shipments and invoices." }
+  arrow @order : I1 -> 0I1
+  arrow @policy : C1 -> 0C1
+  arrow @shipment : 0O1 -> O1
+  arrow @clerk : M1 -> 0M1 kind=resource
+}
+
+diagram A0 status=draft c="AK15(AK 14)" author="A. Author" date="2026-10-20" {
+  description "Orders are checked, then shipped and billed." origin=llm source="proposal P0001"
+  box 1 "Check Order" { description "Accepts orders that meet the order policy." }
+  box 2 "Ship Order"
+  box 3 "Bill Customer" origin=prd source="PRD.md#billing"
+
+  arrow "Purchase Order" : I1 -> 1I1 key=order-feed  # a synonym resolves to @order
+  arrow @policy : C1 -> 1C1
+  arrow @policy : C1 -> 3C1 tunnel=box
+  arrow @rush-order : [C1] -> 2C1
+  arrow @clerk : M1 -> 1M1 kind=code code="orders::check::validate"
+  arrow @order : 1O -> fork {
+    -> 2I1
+    @order-line -> 3I1 label="Order Line" rel=part_of
+  }
+  arrow @shipment : join {
+    : 2O1
+    "Delivery Note" : 3O rel=all  # free text: no concept has this name
+  } -> O1
+  arrow @invoice : 3O1 -> [O1]
+
+  call 2 -> @pack-goods | WH/@pack-goods note=1 map="I1=I1, C1=C2"
+  note 1 "Ship from the main warehouse unless the order is a rush order." on call 2, box 2, C1 -> 1C1, C1 -> 3C1, @order-feed, [C1]
+}
+
+diagram A0.3 {
+  box 1 "Price Lines"
+  box 2 "Apply Tax"
+  box 3 "Issue Invoice"
+}

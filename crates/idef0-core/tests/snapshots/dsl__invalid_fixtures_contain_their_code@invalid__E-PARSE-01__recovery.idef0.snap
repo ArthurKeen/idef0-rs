@@ -1,0 +1,11 @@
+---
+source: crates/idef0-core/tests/dsl.rs
+expression: "format!(\"{code}: {errors} error(s)\\n{}\", report.join(\"\\n\"))"
+input_file: fixtures/invalid/E-PARSE-01/recovery.idef0
+---
+E-PARSE-01: 5 error(s)
+10:16: error[E-PARSE-01] model: expected the concept name, found `{`
+16:21: error[E-PARSE-01] model: expected `->`, found `=`
+18:25: error[E-PARSE-01] model: `key=` needs a value on the same line
+20:10: error[E-PARSE-01] model: expected `->`, found `@x`
+21:10: error[E-PARSE-01] model: unterminated string

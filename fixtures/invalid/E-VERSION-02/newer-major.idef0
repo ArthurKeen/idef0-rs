@@ -1,0 +1,4 @@
+idef0 1.0
+model "New" {
+  abbrev "NEW"
+}

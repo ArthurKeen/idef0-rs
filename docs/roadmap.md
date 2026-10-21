@@ -180,6 +180,8 @@
 
 **Critical path:** M0 → M1 → M2 → M3.1 ⚑ → M3 → M4.0 ⚑ → M4 → M5.6 → M6 → M7 → M8 → M10 → M11 → M12.
 
+**Execution order (decided 2026-10-20): SVG first.** After M1.4 the work takes the shortest path to a viewable diagram, M2.1 → M4.0 ⚑ → M4.1–M4.5 (`idef0 render --svg`), then returns to M1.5–M1.7, M2.2–M2.6 and M3. Layout depends on none of those (table above).
+
 **Parallel tracks:**
 - M5 (except M5.6) once M4.5 is done.
 - M9.1–M9.3 once M8.1 is done.

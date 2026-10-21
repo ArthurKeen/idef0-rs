@@ -117,6 +117,11 @@ impl KeyMinter for SlugMinter {
 pub struct ArrowId(CompactString);
 
 impl ArrowId {
+    /// An id for an arrow that cannot be lowered (an end on a missing box), from its text.
+    pub(crate) fn raw(text: String) -> Self {
+        Self(CompactString::new(text))
+    }
+
     /// The id as written.
     pub fn as_str(&self) -> &str {
         &self.0

@@ -1,0 +1,8 @@
+---
+source: crates/idef0-core/tests/dsl.rs
+expression: "format!(\"{code}: {errors} error(s)\\n{}\", report.join(\"\\n\"))"
+input_file: fixtures/invalid/E-NODE-02/numbering.idef0
+---
+E-NODE-02: 2 error(s)
+6:7: error[E-NODE-02] diagram A-0: A-0 has only box 0, not box 1
+10:7: error[E-NODE-02] diagram A0: box 3 is box 2 in statement order (metamodel §16.3)

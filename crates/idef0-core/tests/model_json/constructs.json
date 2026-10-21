@@ -72,6 +72,39 @@
     }
   },
   "diagrams": {
+    "A-1": {
+      "title": "Run the Sales Operation",
+      "boxes": [
+        {
+          "key": "plan-sales",
+          "name": "Plan Sales"
+        },
+        {
+          "key": "fulfill-orders",
+          "name": "Fulfill Orders"
+        },
+        {
+          "key": "supply-goods",
+          "name": "Supply Goods"
+        }
+      ],
+      "lineage": 1,
+      "arrows": [
+        {
+          "concept": "@goods",
+          "src": {
+            "box": "supply-goods",
+            "side": "O",
+            "rank": 1
+          },
+          "dst": {
+            "box": "fulfill-orders",
+            "side": "M",
+            "rank": 1
+          }
+        }
+      ]
+    },
     "A-0": {
       "title": "Fulfill Orders",
       "boxes": [
@@ -124,39 +157,6 @@
           "src": {
             "side": "M",
             "icom": 1
-          },
-          "dst": {
-            "box": "fulfill-orders",
-            "side": "M",
-            "rank": 1
-          }
-        }
-      ]
-    },
-    "A-1": {
-      "title": "Run the Sales Operation",
-      "boxes": [
-        {
-          "key": "plan-sales",
-          "name": "Plan Sales"
-        },
-        {
-          "key": "fulfill-orders",
-          "name": "Fulfill Orders"
-        },
-        {
-          "key": "supply-goods",
-          "name": "Supply Goods"
-        }
-      ],
-      "lineage": 1,
-      "arrows": [
-        {
-          "concept": "@goods",
-          "src": {
-            "box": "supply-goods",
-            "side": "O",
-            "rank": 1
           },
           "dst": {
             "box": "fulfill-orders",

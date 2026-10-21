@@ -1,0 +1,12 @@
+idef0 0.2
+model "Digits" {
+  abbrev "DIG"
+}
+diagram A0 {
+  box 1 "Plan"
+  box 2 "Build"
+  box 3 "Ship"
+}
+diagram A28 {
+  box 1 "Box eight does not exist"
+}

@@ -1,0 +1,7 @@
+---
+source: crates/idef0-core/tests/dsl.rs
+expression: "format!(\"{code}: {errors} error(s)\\n{}\", report.join(\"\\n\"))"
+input_file: fixtures/invalid/E-LIMIT-01/long-name.idef0
+---
+E-LIMIT-01: 1 error(s)
+6:9: error[E-LIMIT-01] model: a box name is longer than 256 characters
