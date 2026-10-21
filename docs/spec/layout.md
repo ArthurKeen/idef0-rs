@@ -167,7 +167,7 @@ w_i = ceil_2( max( box_min.w,
                    text_w(wrap(title_i, w_i)) + 2·pad ) )
 ```
 
-`ceil_k` rounds up to a multiple of *k* gu.
+`ceil_k` rounds up to a multiple of *k* gu. `corner_label_h` is one text row (`line_h`): the corner label never shares a row with the title.
 
 ### 4.2 Title wrap
 
