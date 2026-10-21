@@ -1,0 +1,6 @@
+---
+source: crates/idef0-layout/tests/route.rs
+expression: listing(&r)
+input_file: fixtures/layout/templates/output-exit.idef0
+---
+probe OutputExit params=[] cost=132 path=(64,36) (196,36)

@@ -8,6 +8,7 @@
 pub mod metrics;
 pub mod place;
 pub mod ports;
+pub mod route;
 pub mod size;
 pub mod spike;
 pub mod text;

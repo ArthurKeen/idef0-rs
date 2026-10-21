@@ -64,5 +64,5 @@ A developer laptop (Apple M-series, macOS, Node 26) gave the same picture: globa
 
 - M4.1–M4.3 implement sizing, placement and global routing as specified. No Worker plumbing is needed for layout in M7.x.
 - M4.4 (track assignment) must report crossing counts. The spike's 104 crossings on center lines are not a baseline for `crossings.json`.
-- The spike module, `scripts/layout-spike/` and the workflow stay until M4.3 replaces the prototype. M4.3 either ports the harness to the real API or removes it along with the module.
+- The spike module, `scripts/layout-spike/` and the workflow stay until M4.3 replaces the prototype. M4.3 either ports the harness to the real API or removes it along with the module. *Done in M4.3:* the harness now times the real sizing, placement iteration and global routing (`layout_routes`), and the module keeps only Auto-Arrange step 1 until M4.7.
 - Risk: Chromium's wasm tier-up or GC could differ from Node's V8. The browser CI epic re-measures with `wasm-bindgen-test`. The headroom (25×) makes a flip unlikely.

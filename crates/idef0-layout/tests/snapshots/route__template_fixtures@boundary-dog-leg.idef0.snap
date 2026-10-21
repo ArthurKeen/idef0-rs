@@ -1,0 +1,6 @@
+---
+source: crates/idef0-layout/tests/route.rs
+expression: listing(&r)
+input_file: fixtures/layout/templates/boundary-dog-leg.idef0
+---
+probe BoundaryDogLeg params=[] cost=336 path=(12,0) (12,12) (12,116) (132,116)

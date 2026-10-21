@@ -275,15 +275,17 @@ Each arrow is routed by a template chosen by its class `(src i, dst j, dst role)
 |---|---|---|---|---|
 | `i<j`, I | forward input | E from O_i → V_c ↓ to y(I_j) → E into I_j | 2 | `c ∈ [i, j−1]` (prefer `j−1`) |
 | `i<j`, C | forward control | E from O_i to x(C_j) → ↓ into C_j | 1 | — |
-| `i<j`, M | forward mechanism | E → V_c ↓ to H_j → E to x(M_j) → ↑ into M_j | 3 | `c` |
+| `i<j`, M | forward mechanism | E → V_c ↓ to H_j → E to x(M_j) → ↑ into M_j | 3 | `c ∈ [i, j−1]` (prefer `j−1`) |
 | `i>j`, C | feedback control ("up and over") | E → V_i ↑ to H_r → W to x(C_j) → ↓ | 3 | `r ∈ [0, j−1]` (prefer `j−1`) |
-| `i>j`, I | feedback input ("down and under") | E → V_i ↓ to H_r → W to V_c → ↑ to y(I_j) → E | 4 | `r ∈ [i, n]`, `c ∈ [0, j−1]` |
-| `i>j`, M | feedback mechanism ("down and under") | E → V_i ↓ to H_r → W to x(M_j) → ↑ | 3 | `r ∈ [i, n]` |
+| `i>j`, I | feedback input ("down and under") | E → V_i ↓ to H_r → W to V_c → ↑ to y(I_j) → E | 4 | `r ∈ [i, n]` (prefer `i`), `c ∈ [0, j−1]` (prefer `j−1`) |
+| `i>j`, M | feedback mechanism ("down and under") | E → V_i ↓ to H_r → W to x(M_j) → ↑ | 3 | `r ∈ [i, n]` (prefer `i`) |
 | `i=j`, C | self control loop | E → V_i ↑ → H_{i−1} W → ↓ | 3 | — |
 | `i=j`, I | self input loop | E → V_i ↓ → H_i W → V_{i−1} ↑ → E | 4 | — |
+| `i=j`, M | self mechanism loop ("down and under") | E → V_i ↓ to H_r → W to x(M_i) → ↑ | 3 | `r ∈ [i, n]` (prefer `i`) |
 | boundary, matching side | straight | one segment | 0 | — |
-| boundary, role shift or frame-order dog-leg | dog-leg | via the nearest margin channel | 1–2 | `c` or `r` |
-| `i →` boundary O | output exit | E from O_i → V_c → E along a free row to the right frame | 0–2 | `c` |
+| boundary, frame-order dog-leg | dog-leg | from the frame entry along the side's margin channel (`V_0` for I, `H_0` for C, `H_n` for M) to the port's row or column | 2 | — |
+| boundary, role shift | dog-leg | from the frame entry into the margin channel beside that frame edge, then along the margin channels `V_0`, `H_0`, `H_n` to the one beside the port's side, then into the port | 2–4 | — |
+| `i →` boundary O | output exit | E from O_i to the right frame; if frame order moves the exit, via `V_n` | 0 or 2 | — |
 | call | call (FR-LAYOUT-06, -23) | ↓ from the call port through the column band below box *i* to the bottom frame | 0 | — |
 | "to all" | stub (FR-LAYOUT-18) | short stub to the label "to all ‹concept›"; no per-box routing | 0 | — |
 
@@ -294,22 +296,26 @@ Each arrow is routed by a template chosen by its class `(src i, dst j, dst role)
 cost(route) = 100·bends + 1·length_gu + 40·crossings + 25·overflow(channel) + 10·deviation_from_preferred
 ```
 
-`overflow(channel) = max(0, density − 3)` spreads load across channels; gaps grow to fit any density (§5.2), so overflow is a preference, not a capacity limit.
+Crossings are counted between non-sibling routes; branches and leaves of one bundle share a trunk (§9). `overflow(channel) = max(0, density − 3)` spreads load across channels; gaps grow to fit any density (§5.2), so overflow is a preference, not a capacity limit.
 
 A candidate is **rejected** (infinite cost) if it:
 - enters a keep-out region or passes closer than `clear` to one;
 - has an interior segment shorter than `2·r_fillet` (4 gu) or a terminal segment shorter than `clear` (FR-LAYOUT-24, §8.2);
 - lies collinear with and overlapping a non-sibling segment.
 
+The keep-out rule exempts the box at either end of the route: a terminal segment touches its own box at the port and is rejected only if it enters the box's interior (FR-LAYOUT-05). Global routing puts every channel run on its channel's center line, because track assignment (§7) spreads the runs later. The collinear rule therefore applies only to fixed segments, the ones outside channel runs; overlapping runs in a channel are what its density counts.
+
+**Frame entries (FR-LAYOUT-22).** Before routing, each boundary arrow gets its point on the frame edge. Its *natural* coordinate is the port's row or column for a matching side. For a role shift, it is the center line of the margin channel it turns into: `H_0` for I into C, `H_n` for I into M, and `V_0` for C or M into another role. The natural coordinates on one frame edge are sorted and handed out in ICOM code order. Uncoded `[ ]` border ports keep their own. Then, in coordinate order, every entry moves at least one track pitch (`pitch_y` on I and O, `pitch_x` on C and M) past the previous one. A backward pass then keeps every entry at least `clear` from the frame corners. Both passes keep the order. An arrow whose entry differs from its port's coordinate routes as a dog-leg.
+
 ### 6.4 Search (implementation choice)
 
 The routing order below is an idef0-rs implementation choice. It is deterministic, and it is not the FIPS B.2.4 drafting order (which governs placement, FR-LAYOUT-21).
 
 1. **Order:**
-   1. matching-side boundary arrows (their geometry is fixed by §5.4);
+   1. matching-side boundary arrows, straight output exits included (their geometry is fixed by §5.4);
    2. internal arrows by descending constraint weight: bundle leaf count × role weight (control 3, input 2, mechanism 1);
-   3. then by class priority: forward C, forward I, feedback C, feedback I, M;
-   4. then the remaining boundary arrows (dog-legs), then call arrows and "to all" stubs;
+   3. then by class priority: forward C, forward I, feedback C, feedback I, M (a self loop ranks with feedback of its role);
+   4. then the remaining boundary arrows (dog-legs), then call arrows and "to all" stubs (M5.2);
    5. ties: source rank, then arrow id ([metamodel](metamodel.md) identity rules).
 2. For each arrow, enumerate the template parameters (at most n² ≤ 49 choices) and pick the minimum cost given the arrows already placed. Ties break by parameter tuple order.
 3. **Rip-up and reroute:** up to `K = 3` passes; each pass removes and re-inserts every arrow in order. Stop early when the total cost does not decrease.

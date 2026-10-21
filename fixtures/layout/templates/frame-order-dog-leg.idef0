@@ -1,0 +1,14 @@
+idef0 0.2
+# Template fixture (frame-order-dog-leg): FR-LAYOUT-22: I1 feeds the lower box, I2 the upper, so I1 cannot be straight.
+# Roadmap M4.3; the probe arrow must route with this class.
+model "Template frame-order-dog-leg" {
+  abbrev "TPL"
+}
+
+diagram A0 {
+  box 1 "Plan Work"
+  box 2 "Do Work"
+  box 3 "Check Work"
+  arrow : I1 -> 3I1 key=probe
+  arrow : I2 -> 1I1
+}

@@ -1,18 +1,25 @@
-//! Times the M4.0 layout spike on the bench fixtures (layout §16.4).
+//! Times layout on the bench fixtures (layout §16.4; ADR 0002): the real sizing, placement and
+//! global routing (M4.1–M4.3), and the M4.0 spike's Auto-Arrange step 1.
 //!
 //! `layout-spike`               timings: median and p95 per operation
 //! `layout-spike once <op>`     one run of `<op>`, for `valgrind --tool=callgrind`; subtract
 //!                              `once noop` (which only parses the fixtures) to isolate `<op>`
 //!
-//! Operations: `parse`, `place`, `layout` (place + global routing), `arrange1`
-//! (Auto-Arrange step 1 on the worst case), `layout-worst`.
+//! Operations: `parse`, `place` (sizing and one staircase placement), `layout` (placement
+//! iteration with global routing), `layout-dogfood`, `layout-worst`, `arrange1` (Auto-Arrange
+//! step 1 on the worst case).
 
 use std::hint::black_box;
 use std::time::Instant;
 
 use idef0_core::dsl::parse;
+use idef0_core::id::NodeId;
 use idef0_core::model::Model;
-use idef0_layout::spike::{arrange_box_order, diagram, place, route};
+use idef0_layout::metrics::Metrics;
+use idef0_layout::place::{EdgeAllowance, Gaps, Tracks, box_plans, place};
+use idef0_layout::route::{Routing, layout_routes};
+use idef0_layout::spike::{arrange_box_order, diagram};
+use idef0_layout::text::TextMetric;
 
 const DENSE: &str = include_str!("../../../fixtures/bench/dense-7x40.idef0");
 const WORST: &str = include_str!("../../../fixtures/bench/arrange-worst-7.idef0");
@@ -22,36 +29,76 @@ fn model(src: &str) -> Model {
     parse(src).model.expect("fixture parses")
 }
 
+fn layout(m: &Model) -> Routing {
+    let metrics = Metrics::default();
+    layout_routes(m, &NodeId::a0(), true, TextMetric::Mono, &metrics)
+        .expect("A0")
+        .1
+}
+
 fn run(op: &str, dense: &Model, worst: &Model, dogfood: &Model) {
-    let d = |m| diagram(m, "A0").expect("A0");
     match op {
         "noop" => {} // baseline for instruction counts: fixture parsing in main() only
         "parse" => {
             black_box(parse(black_box(DENSE)));
         }
         "place" => {
-            black_box(place(d(dense)));
+            let m = Metrics::default();
+            let plans = box_plans(dense, &NodeId::a0(), true, TextMetric::Mono, &m);
+            let gaps = Gaps::required(&Tracks::none(plans.len()), EdgeAllowance::default(), &m);
+            black_box(place(&plans, &gaps, &m));
         }
         "layout" => {
-            let p = place(d(dense));
-            black_box(route(d(dense), &p));
+            black_box(layout(dense));
         }
         "layout-dogfood" => {
-            let p = place(d(dogfood));
-            black_box(route(d(dogfood), &p));
+            black_box(layout(dogfood));
         }
         "layout-worst" => {
-            let p = place(d(worst));
-            black_box(route(d(worst), &p));
+            black_box(layout(worst));
         }
         "arrange1" => {
-            black_box(arrange_box_order(d(worst)));
+            black_box(arrange_box_order(diagram(worst, "A0").expect("A0")));
         }
         other => panic!("unknown op {other}"),
     }
 }
 
-const OPS: [&str; 6] = ["parse", "place", "layout", "layout-dogfood", "layout-worst", "arrange1"];
+/// Bends in a route: vertices where the direction turns.
+fn bends(r: &Routing) -> usize {
+    r.routes
+        .iter()
+        .map(|x| {
+            x.path
+                .windows(3)
+                .filter(|w| {
+                    !((w[0].0 == w[1].0 && w[1].0 == w[2].0)
+                        || (w[0].1 == w[1].1 && w[1].1 == w[2].1))
+                })
+                .count()
+        })
+        .sum()
+}
+
+fn facts(name: &str, r: &Routing) {
+    let forced = r.routes.iter().filter(|x| x.forced).count();
+    println!(
+        "{name}: routed={} forced={forced} bends={} cost={} passes={}",
+        r.routes.len(),
+        bends(r),
+        r.total_cost,
+        r.passes
+    );
+}
+
+const OPS: [&str; 6] = [
+    "parse",
+    "place",
+    "layout",
+    "layout-dogfood",
+    "layout-worst",
+    "arrange1",
+];
 
 fn main() {
     let (dense, worst, dogfood) = (model(DENSE), model(WORST), model(DOGFOOD));
@@ -61,15 +108,17 @@ fn main() {
         return;
     }
     let iters: usize = args.first().and_then(|a| a.parse().ok()).unwrap_or(200);
-    // Facts about the workload, so the ADR can quote them.
-    let dd = diagram(&dense, "A0").expect("A0");
-    let r = route(dd, &place(dd));
-    println!("dense-7x40: edges={} routed={} crossings={} bends={} candidates={} passes={}", 40, r.routes.len(), r.crossings, r.bends, r.candidates, r.passes);
+    // Facts about the workload, so the ADR can quote them. Crossings come with track
+    // assignment (M4.4).
+    facts("dense-7x40", &layout(&dense));
+    facts("arrange-worst-7", &layout(&worst));
+    facts("dogfood", &layout(&dogfood));
     let wd = diagram(&worst, "A0").expect("A0");
-    let rw = route(wd, &place(wd));
-    println!("arrange-worst-7 layout: routed={} crossings={} bends={} candidates={}", rw.routes.len(), rw.crossings, rw.bends, rw.candidates);
     let a = arrange_box_order(wd);
-    println!("arrange-worst-7 step1: cost {} -> {} order={:?} nodes={} leaves={}", a.current_cost, a.cost, a.order, a.nodes, a.leaves);
+    println!(
+        "arrange-worst-7 step1: cost {} -> {} order={:?} nodes={} leaves={}",
+        a.current_cost, a.cost, a.order, a.nodes, a.leaves
+    );
     println!("op,iters,median_us,p95_us,max_us");
     for op in OPS {
         for _ in 0..5 {

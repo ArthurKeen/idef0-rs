@@ -1,0 +1,10 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc b9b34ffb6000e5cb5b86c5153b9eacfa60d60fcea8705b3333b5f735cbd4c86b # shrinks to n = 1, arrows = [], boundary = [(4, 0), (4, 0)], outs = [], calls = []
+cc cdf11a02071c3e9474ccc3f3be3b7228672b107d0b52bc8ffc85adf2271f9170 # shrinks to n = 1, arrows = [], boundary = [(4, 0), (5, 0)], outs = [], calls = []
+cc 89ae9b287470d8d3ca523a9e4526dafea96819d15e67f7c9c9e2e5e3049870b6 # shrinks to n = 6, arrows = [], boundary = [(6, 0), (6, 0), (6, 0), (6, 0)], outs = [], calls = []
+cc 42d54f8075b020be8fb93c149eaf82e25e21271d1ac166dc2d12a471310b0609 # shrinks to n = 4, arrows = [], boundary = [(7, 0), (7, 0), (4, 0), (4, 0)], outs = [], calls = []
