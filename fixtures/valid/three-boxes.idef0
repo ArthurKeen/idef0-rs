@@ -1,0 +1,36 @@
+idef0 0.2
+# Valid fixture: the smallest well-formed model, in the default profile. A-0 with its top
+# box and an A0 diagram with three boxes, a feedback arrow and a mechanism.
+model "Three Boxes" {
+  abbrev "TRI"
+  purpose "Show the smallest valid model."
+  viewpoint "Modeler"
+}
+
+concept request "Request" { description "A message that asks for work." }
+concept plan "Plan" { description "A schedule of the work to do." }
+concept product "Product" { description "The finished work." }
+concept rules "Rules" { description "A set of constraints on the work." }
+concept status "Status" { description "A report of progress, fed back to planning." }
+concept team "Team" { description "The people who do the work." }
+
+diagram A-0 "Deliver Work" {
+  box 0 "Deliver Work" key=deliver-work
+  arrow @request : I1 -> 0I1
+  arrow @rules : C1 -> 0C1
+  arrow @product : 0O1 -> O1
+  arrow @team : M1 -> 0M1 kind=resource
+}
+
+diagram A0 {
+  box 1 "Plan Work" key=plan-work
+  box 2 "Do Work" key=do-work
+  box 3 "Check Work" key=check-work
+  arrow @request : I1 -> 1I1
+  arrow @rules : C1 -> 1C1
+  arrow @plan : 1O1 -> 2C1
+  arrow @product : 2O1 -> 3I1
+  arrow @status : 3O2 -> 1C2  # feedback: up and over
+  arrow @product : 3O1 -> O1
+  arrow @team : M1 -> 2M1 kind=resource
+}

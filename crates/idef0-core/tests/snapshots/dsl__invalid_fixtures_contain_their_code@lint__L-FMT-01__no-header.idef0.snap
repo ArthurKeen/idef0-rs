@@ -1,0 +1,7 @@
+---
+source: crates/idef0-core/tests/dsl.rs
+expression: "format!(\"{code}: {errors} error(s)\\n{}\", report.join(\"\\n\"))"
+input_file: fixtures/lint/L-FMT-01/no-header.idef0
+---
+L-FMT-01: 0 error(s)
+1:1: warning[L-FMT-01] model: no version header: read as legacy 0.1 with the 0.2 grammar; run `idef0 migrate` (FR-WS-05)

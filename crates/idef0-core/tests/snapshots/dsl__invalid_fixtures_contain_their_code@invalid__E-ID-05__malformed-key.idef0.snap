@@ -1,0 +1,9 @@
+---
+source: crates/idef0-core/tests/dsl.rs
+expression: "format!(\"{code}: {errors} error(s)\\n{}\", report.join(\"\\n\"))"
+input_file: fixtures/invalid/E-ID-05/malformed-key.idef0
+---
+E-ID-05: 3 error(s)
+5:9: error[E-ID-05] model: `Order` is not a valid key: lowercase letters, digits and `-`
+7:27: error[E-ID-05] model: `Check_Order` is not a valid key: lowercase letters, digits and `-`
+9:26: error[E-ID-05] model: `-feed` is not a valid key: lowercase letters, digits and `-`

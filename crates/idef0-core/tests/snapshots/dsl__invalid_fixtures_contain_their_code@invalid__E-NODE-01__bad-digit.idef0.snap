@@ -1,0 +1,7 @@
+---
+source: crates/idef0-core/tests/dsl.rs
+expression: "format!(\"{code}: {errors} error(s)\\n{}\", report.join(\"\\n\"))"
+input_file: fixtures/invalid/E-NODE-01/bad-digit.idef0
+---
+E-NODE-01: 1 error(s)
+10:9: error[E-NODE-01] diagram A2: `A28` has an invalid box digit: box numbers are 1-7

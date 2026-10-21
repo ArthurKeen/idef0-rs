@@ -1,0 +1,4 @@
+idef0 0.2
+model "No Abbrev" {
+  purpose "Missing its abbrev."
+}

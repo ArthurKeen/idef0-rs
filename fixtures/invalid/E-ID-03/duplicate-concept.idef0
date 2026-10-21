@@ -1,0 +1,6 @@
+idef0 0.2
+model "Concepts" {
+  abbrev "CON"
+}
+concept order "Order" { description "An order." }
+concept order "Order Again" { description "The same key twice." }

@@ -15,8 +15,10 @@ serde.workspace       = true
 smallvec.workspace    = true
 thiserror.workspace   = true
 unicode-normalization.workspace = true
+winnow.workspace = true
 
 [dev-dependencies]
+insta.workspace      = true
 proptest.workspace   = true
 serde_json.workspace = true
 

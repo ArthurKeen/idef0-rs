@@ -1,0 +1,11 @@
+idef0 0.2
+model "Attributes" {
+  abbrev "ATT"
+  colour "blue"
+}
+concept order "Order" shade=dark { description "An order." }
+diagram A0 priority=high {
+  box 1 "Check Order" weight=3
+  box 2 "Ship Order"
+  arrow @order : 1O1 -> 2I1 style=dashed
+}

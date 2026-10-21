@@ -1,0 +1,26 @@
+idef0 0.2
+# Several syntax errors; the parser reports each and resynchronizes (metamodel §16.4).
+model "Recovery" {
+  abbrev "REC"
+  purpose "Show error recovery."
+  viewpoint "Parser"
+}
+
+concept order "Order" { description "An order." }
+concept broken { description "The name is missing." }
+concept invoice "Invoice" { description "Still parsed after the broken concept." }
+
+diagram A0 {
+  box 1 "Check Order"
+  box 2 "Ship Order"
+  arrow @order : I1 => 1I1
+  arrow @order : 1O1 -> 2I1
+  box 3 "Bill Customer" key=
+  arrow @invoice : 2O1 -> O1
+  call 2 @x
+  note 1 "Unterminated
+}
+
+diagram A1 {
+  box 1 "Still Parsed"
+}

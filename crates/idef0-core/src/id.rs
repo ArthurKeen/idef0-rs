@@ -995,7 +995,10 @@ mod tests {
             .collect();
         nodes.sort();
         let sorted: Vec<String> = nodes.iter().map(ToString::to_string).collect();
-        assert_eq!(sorted, ["A-3", "A-1", "A-0", "A0", "A1", "A11", "A12", "A2"]);
+        assert_eq!(
+            sorted,
+            ["A-3", "A-1", "A-0", "A0", "A1", "A11", "A12", "A2"]
+        );
     }
 
     #[test]

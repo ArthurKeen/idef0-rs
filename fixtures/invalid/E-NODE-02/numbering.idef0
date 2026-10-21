@@ -1,0 +1,11 @@
+idef0 0.2
+model "Numbering" {
+  abbrev "NUM"
+}
+diagram A-0 "Top" {
+  box 1 "Top"
+}
+diagram A0 {
+  box 1 "Plan"
+  box 3 "Build"
+}

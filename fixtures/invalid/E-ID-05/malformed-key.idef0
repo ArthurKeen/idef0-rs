@@ -1,0 +1,10 @@
+idef0 0.2
+model "Keys" {
+  abbrev "KEY"
+}
+concept Order "Order" { description "Keys are lowercase." }
+diagram A0 {
+  box 1 "Check Order" key=Check_Order
+  box 2 "Ship Order"
+  arrow : 1O1 -> 2I1 key=-feed
+}

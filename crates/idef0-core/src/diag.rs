@@ -93,9 +93,33 @@ e_codes! {
     E_NOTE_01 = "E-NOTE-01", Diagram, "Note target not on this diagram";
 }
 
+/// `E-LIMIT-01`: a parser input limit was exceeded (architecture §8.3, which owns it).
+pub const E_LIMIT_01: Code = Code("E-LIMIT-01");
+
+/// `L-FMT-01`: the file has no version header and is read as legacy 0.1 (metamodel §14).
+pub const L_FMT_01: Code = Code("L-FMT-01");
+
+/// Core codes owned by other documents: `E-LIMIT-01` (architecture §8.3) and the lints core
+/// emits before the lint layer exists (validation §7.2).
+pub const OTHER_CODES: &[CodeInfo] = &[
+    CodeInfo {
+        code: E_LIMIT_01,
+        subject: SubjectKind::Model,
+        summary: "Parser input limit exceeded",
+    },
+    CodeInfo {
+        code: L_FMT_01,
+        subject: SubjectKind::Model,
+        summary: "Missing version header (legacy 0.1)",
+    },
+];
+
 /// The registry entry for `code`, if core owns it.
 pub fn code_info(code: Code) -> Option<&'static CodeInfo> {
-    E_CODES.iter().find(|info| info.code == code)
+    E_CODES
+        .iter()
+        .chain(OTHER_CODES)
+        .find(|info| info.code == code)
 }
 
 /// A diagnostic layer (validation §1): fatal core checks, lints, rules, geometry.
@@ -163,6 +187,26 @@ impl fmt::Display for SubjectRef {
     }
 }
 
+/// A source location (architecture §4.4): byte offsets into the file, and the 1-based line
+/// and UTF-8 byte column of `start`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub struct Span {
+    /// Byte offset of the first byte.
+    pub start: u32,
+    /// Byte offset one past the last byte.
+    pub end: u32,
+    /// 1-based line of `start`.
+    pub line: u32,
+    /// 1-based UTF-8 byte column of `start`.
+    pub col: u32,
+}
+
+impl fmt::Display for Span {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}:{}", self.line, self.col)
+    }
+}
+
 /// A finding.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Diagnostic {
@@ -176,6 +220,8 @@ pub struct Diagnostic {
     pub layer: Layer,
     /// A human-readable message.
     pub message: String,
+    /// Where in the source, when the finding comes from a parsed file.
+    pub span: Option<Span>,
 }
 
 impl Diagnostic {
@@ -197,7 +243,28 @@ impl Diagnostic {
             code,
             layer: Layer::E,
             message: message.into(),
+            span: None,
         }
+    }
+
+    /// A lint warning from core, such as `L-FMT-01`.
+    pub fn lint_warning(code: Code, subject: SubjectRef, message: impl Into<String>) -> Self {
+        debug_assert!(code.as_str().starts_with("L-"), "{code} is not a lint");
+        Self {
+            severity: Severity::Warning,
+            subject,
+            code,
+            layer: Layer::L,
+            message: message.into(),
+            span: None,
+        }
+    }
+
+    /// The same finding, located at `span`.
+    #[must_use]
+    pub fn at(mut self, span: Span) -> Self {
+        self.span = Some(span);
+        self
     }
 }
 
@@ -208,6 +275,9 @@ impl fmt::Display for Diagnostic {
             Severity::Warning => "warning",
             Severity::Info => "info",
         };
+        if let Some(span) = self.span {
+            write!(f, "{span}: ")?;
+        }
         write!(f, "{sev}[{}] {}: {}", self.code, self.subject, self.message)
     }
 }
@@ -274,6 +344,21 @@ mod tests {
             .map(|i| (i.code.as_str().to_owned(), i.subject))
             .collect();
         assert_eq!(ours, spec);
+    }
+
+    // validation §7.3 lists E-LIMIT-01 as "core / architecture", subject model.
+    #[test]
+    fn e_limit_01_is_in_validation_7_3() {
+        let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../docs/spec/validation.md");
+        let doc = std::fs::read_to_string(path).unwrap();
+        let row = doc
+            .lines()
+            .find(|l| l.starts_with("| `E-LIMIT-01`"))
+            .unwrap();
+        assert!(
+            row.contains("| model |") && row.contains("core / architecture"),
+            "{row}"
+        );
     }
 
     #[test]

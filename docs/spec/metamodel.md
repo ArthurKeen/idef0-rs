@@ -638,6 +638,7 @@ Editing happens only through **Commands**. Each command is applied by core as a 
 - **Statements** are newline-separated. A `{ … }` body may sit on one line or span several.
 - **`STRING`** is `"…"` with escapes `\" \\ \n \t \u{…}`. **`TRIPLE`** is `"""…"""` (multi-line Markdown, common indentation stripped). `TEXT := STRING | TRIPLE`.
 - **Comments** run from `#` to end of line, outside strings. Placement and attachment: FR-WS-06.
+- **`#n` vs comment:** `#` directly followed by digits and then a space, a tab, a comma, `}` or the end of the line is the occurrence suffix of a note target (`1O1 -> 2I1 #1`); any other `#` starts a comment. Write comments as `# text`.
 - **Tokens:**
   - `KEY` and `ABBREV`: §3.6.
   - `NUM := [0-9]+`; `INT := "-"? NUM`.
