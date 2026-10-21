@@ -1,0 +1,17 @@
+# M4.0 layout spike harness (roadmap M4.0; layout §16; ADR 0002). Not a workspace member: it
+# times the prototype with a clock, which idef0-layout itself may not read (D6). Built
+# natively and for wasm32-wasip1 (run under Node's WASI, the V8 engine Chromium uses).
+[package]
+name = "layout-spike"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+idef0-core   = { path = "../../crates/idef0-core" }
+idef0-layout = { path = "../../crates/idef0-layout" }
+
+[profile.release]
+debug = 1   # symbols for callgrind
