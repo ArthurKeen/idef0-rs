@@ -8,6 +8,7 @@
 use core::fmt;
 
 use crate::id::NodeId;
+use crate::identity::ArrowId;
 use crate::text::{BoxKey, ConceptKey};
 
 /// A diagnostic code, such as `E-TYPE-01`.
@@ -121,26 +122,6 @@ pub enum Severity {
     Info,
 }
 
-/// An arrow statement, or one branch or leaf of a bundle, by position: the `arrow`-th
-/// statement of `diagram` (0-based) and, for a bundle, its `part`-th branch or leaf. This
-/// stands in for the structural arrow id until it exists (metamodel §3.4, roadmap M1.4).
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct EdgeRef {
-    /// The diagram.
-    pub diagram: NodeId,
-    /// 0-based arrow statement index.
-    pub arrow: u32,
-    /// 0-based branch or leaf index; `None` for a plain arrow or a bundle trunk.
-    pub part: Option<u32>,
-}
-
-impl fmt::Display for EdgeRef {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}:#{}", self.diagram, self.arrow)?;
-        self.part.map_or(Ok(()), |p| write!(f, "/{p}"))
-    }
-}
-
 /// What a diagnostic reports on. The order is the report's canonical subject order
 /// (validation §8.1): diagrams in node order, then boxes, edges, concepts, the model.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -149,8 +130,8 @@ pub enum SubjectRef {
     Diagram(NodeId),
     /// A box, by key.
     Box(BoxKey),
-    /// An arrow.
-    Edge(EdgeRef),
+    /// An arrow, by its id (metamodel §3.4).
+    Edge(ArrowId),
     /// A concept, by key.
     Concept(ConceptKey),
     /// The model.
@@ -297,12 +278,11 @@ mod tests {
 
     #[test]
     fn display() {
-        let e = EdgeRef {
-            diagram: "A0".parse().unwrap(),
-            arrow: 3,
-            part: Some(1),
-        };
-        let d = Diagnostic::fatal(E_TYPE_01, SubjectRef::Edge(e), "bad source");
-        assert_eq!(d.to_string(), "error[E-TYPE-01] edge A0:#3/1: bad source");
+        let key: BoxKey = "check-order".parse().unwrap();
+        let d = Diagnostic::fatal(E_CALL_02, SubjectRef::Box(key), "the top box cannot call");
+        assert_eq!(
+            d.to_string(),
+            "error[E-CALL-02] box @check-order: the top box cannot call"
+        );
     }
 }

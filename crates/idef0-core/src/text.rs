@@ -77,6 +77,13 @@ macro_rules! key_type {
             pub fn as_str(&self) -> &str {
                 &self.0
             }
+
+            /// A key from a string the slug rule produced, which is always valid.
+            #[allow(dead_code, reason = "arrow keys are written by hand, never minted")]
+            pub(crate) fn from_slug(s: &str) -> Self {
+                debug_assert!(is_key(s), "slug {s:?} is not a key");
+                Self(CompactString::new(s))
+            }
         }
 
         impl FromStr for $name {

@@ -1,0 +1,27 @@
+box A-0 @fulfill-orders
+arrow A-0:I1->0I1#0
+arrow A-0:C1->0C1#0
+arrow A-0:0O1->O1#0
+arrow A-0:M1->0M1#0
+box A-1 @plan-sales
+box A-1 @fulfill-orders
+box A-1 @supply-goods
+arrow A-1:3O1->0M1#0
+box A0 @check-order
+box A0 @ship-order
+box A0 @bill-customer
+arrow order-feed
+arrow A0:C1->1C1#0
+arrow A0:C1->3C1#0
+arrow A0:[C1]->2C1#0
+arrow A0:M1->1M1#0
+arrow A0:1O1->*#0
+arrow A0:1O1->*#0/0
+arrow A0:1O1->*#0/1
+arrow A0:*->O1#0
+arrow A0:*->O1#0/0
+arrow A0:*->O1#0/1
+arrow A0:3O1->[O1]#0
+box A3 @price-lines
+box A3 @apply-tax
+box A3 @issue-invoice

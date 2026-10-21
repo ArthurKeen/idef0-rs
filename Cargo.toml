@@ -31,6 +31,7 @@ nonempty             = { version = "0.12", features = ["serialize"] }
 indexmap             = { version = "2.13", features = ["serde"] }
 unicode-segmentation = "1.12"
 unicode-width        = "0.2"
+unicode-normalization = "0.1.26"                                     # NFKD for the key slug rule (metamodel §3.3)
 thiserror            = "2.0"
 
 # search (wasm-safe)
