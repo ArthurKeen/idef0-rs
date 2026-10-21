@@ -208,12 +208,13 @@ x_1 = m_L,                  y_1 = m_T
 x_{i+1} = x_i + w_i + gx_i   y_{i+1} = y_i + h_i + gy_i
 ```
 
+- `w_i` and `h_i` are the width and height of box *i*'s **keep-out region** (§3.2: the box, its shadow band and its DRE block), because every clearance is measured from the keep-out region. For a box with no shadow and no DRE that is the box itself.
 - `gx_i` is the width of vertical channel **V_i** (between box *i* and box *i+1*); `gy_i` is the height of horizontal channel **H_i**.
 - `gx_i = 2·clear + max(1, d(V_i))·pitch_x` and `gy_i = 2·clear + max(1, d(H_i))·pitch_y`, where `d` is the number of tracks assigned in the channel (§7), plus any nudge (§5.5).
 - **Margins** `m_L, m_T, m_R, m_B` are the margin channels V_0, H_0, V_n, H_n. Each is the largest of:
   - `margin`;
   - `2·clear + d·pitch` for its tracks;
-  - the label allowance of the frame edge: the widest input label (left), the widest output label (right), the control cascade height `n_top·line_h + 2·pad` (top), the mechanism cascade height (bottom), each plus the squiggle width and the ICOM code width.
+  - the label allowance of the frame edge (rounded up to the lattice): the widest input label (left), the widest output label (right), the control cascade height `n_top·line_h + 2·pad` (top), the mechanism cascade height (bottom), each plus the squiggle width and the ICOM code width.
 
 ### 5.2 Placement iteration (SR-40)
 

@@ -1,0 +1,9 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc ebd1a74b65463c6e66db80e13cb6b2eecd3404ece59da409d96d7ee07e18532b # shrinks to plans = [BoxPlan { w: 40, h: 24, shadow: false, dre_w: None }], demands = [[0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 3, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0]]
+cc a344beeda0e7b73ba2dfba5619914233bfe1acc1fb6ff6a3ddddbca4128f8ca2 # shrinks to plans = [BoxPlan { w: 40, h: 24, shadow: false, dre_w: None }, BoxPlan { w: 40, h: 24, shadow: true, dre_w: None }, BoxPlan { w: 40, h: 24, shadow: false, dre_w: None }, BoxPlan { w: 40, h: 24, shadow: false, dre_w: None }, BoxPlan { w: 40, h: 24, shadow: false, dre_w: None }], demand = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+cc b4d6a87cd8cd031aeb69cf22158eaf4d3a907f568545e3dc675b56d88ef1c1dd # shrinks to plans = [BoxPlan { w: 40, h: 24, shadow: false, dre_w: None }, BoxPlan { w: 40, h: 24, shadow: false, dre_w: None }, BoxPlan { w: 40, h: 24, shadow: false, dre_w: None }, BoxPlan { w: 40, h: 24, shadow: false, dre_w: None }, BoxPlan { w: 40, h: 24, shadow: false, dre_w: None }, BoxPlan { w: 40, h: 24, shadow: false, dre_w: None }, BoxPlan { w: 40, h: 24, shadow: false, dre_w: None }], demand = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
