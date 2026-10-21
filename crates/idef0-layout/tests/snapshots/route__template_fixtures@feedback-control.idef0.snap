@@ -1,0 +1,6 @@
+---
+source: crates/idef0-layout/tests/route.rs
+expression: listing(&r)
+input_file: fixtures/layout/templates/feedback-control.idef0
+---
+probe FeedbackControl params=[0] cost=568 path=(172,116) (184,116) (184,12) (44,12) (44,24)

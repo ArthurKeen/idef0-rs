@@ -1,0 +1,6 @@
+---
+source: crates/idef0-layout/tests/route.rs
+expression: listing(&r)
+input_file: fixtures/layout/templates/boundary-straight.idef0
+---
+probe BoundaryStraight params=[] cost=64 path=(98,0) (98,64)

@@ -1,0 +1,13 @@
+idef0 0.2
+# Template fixture (self-input): i = j into I: down and under the box itself.
+# Roadmap M4.3; the probe arrow must route with this class.
+model "Template self-input" {
+  abbrev "TPL"
+}
+
+diagram A0 {
+  box 1 "Plan Work"
+  box 2 "Do Work"
+  box 3 "Check Work"
+  arrow : 2O1 -> 2I1 key=probe
+}

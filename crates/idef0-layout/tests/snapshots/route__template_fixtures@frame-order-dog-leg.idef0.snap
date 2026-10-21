@@ -1,0 +1,7 @@
+---
+source: crates/idef0-layout/tests/route.rs
+expression: listing(&r)
+input_file: fixtures/layout/templates/frame-order-dog-leg.idef0
+---
+probe BoundaryDogLeg params=[0] cost=412 path=(0,36) (12,36) (12,116) (132,116)
+A0:I2->1I1#0 BoundaryDogLeg params=[0] cost=304 path=(0,116) (12,116) (12,36) (24,36)

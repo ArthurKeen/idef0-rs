@@ -1,0 +1,13 @@
+idef0 0.2
+# Template fixture (forward-mechanism): i < j into M: E, down V_c to H_j, E, up into M_j.
+# Roadmap M4.3; the probe arrow must route with this class.
+model "Template forward-mechanism" {
+  abbrev "TPL"
+}
+
+diagram A0 {
+  box 1 "Plan Work"
+  box 2 "Do Work"
+  box 3 "Check Work"
+  arrow : 1O1 -> 3M1 key=probe
+}
