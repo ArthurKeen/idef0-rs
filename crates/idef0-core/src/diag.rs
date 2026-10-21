@@ -96,6 +96,9 @@ e_codes! {
 /// `E-LIMIT-01`: a parser input limit was exceeded (architecture §8.3, which owns it).
 pub const E_LIMIT_01: Code = Code("E-LIMIT-01");
 
+/// `E-METRICS`: a `Metrics` override breaks a constraint of layout §3.2 (layout owns it).
+pub const E_METRICS: Code = Code("E-METRICS");
+
 /// `L-FMT-01`: the file has no version header and is read as legacy 0.1 (metamodel §14).
 pub const L_FMT_01: Code = Code("L-FMT-01");
 
@@ -106,6 +109,11 @@ pub const OTHER_CODES: &[CodeInfo] = &[
         code: E_LIMIT_01,
         subject: SubjectKind::Model,
         summary: "Parser input limit exceeded",
+    },
+    CodeInfo {
+        code: E_METRICS,
+        subject: SubjectKind::Model,
+        summary: "Invalid Metrics override",
     },
     CodeInfo {
         code: L_FMT_01,
@@ -346,19 +354,22 @@ mod tests {
         assert_eq!(ours, spec);
     }
 
-    // validation §7.3 lists E-LIMIT-01 as "core / architecture", subject model.
+    // validation §7.3 lists E-LIMIT-01 ("core / architecture") and E-METRICS ("layout"),
+    // both with subject model.
     #[test]
-    fn e_limit_01_is_in_validation_7_3() {
+    fn other_codes_are_in_validation_7_3() {
         let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../docs/spec/validation.md");
         let doc = std::fs::read_to_string(path).unwrap();
-        let row = doc
-            .lines()
-            .find(|l| l.starts_with("| `E-LIMIT-01`"))
-            .unwrap();
-        assert!(
-            row.contains("| model |") && row.contains("core / architecture"),
-            "{row}"
-        );
+        for (code, owner) in [
+            ("E-LIMIT-01", "core / architecture"),
+            ("E-METRICS", "| layout |"),
+        ] {
+            let row = doc
+                .lines()
+                .find(|l| l.starts_with(&format!("| `{code}`")))
+                .unwrap();
+            assert!(row.contains("| model |") && row.contains(owner), "{row}");
+        }
     }
 
     #[test]
