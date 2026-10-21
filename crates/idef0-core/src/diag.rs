@@ -99,6 +99,10 @@ pub const E_LIMIT_01: Code = Code("E-LIMIT-01");
 /// `E-METRICS`: a `Metrics` override breaks a constraint of layout §3.2 (layout owns it).
 pub const E_METRICS: Code = Code("E-METRICS");
 
+/// `L-LAYOUT-OVERFLOW`: placement hit its iteration cap or a page did not fit (layout §5.2,
+/// §5.3; layout owns it).
+pub const L_LAYOUT_OVERFLOW: Code = Code("L-LAYOUT-OVERFLOW");
+
 /// `L-FMT-01`: the file has no version header and is read as legacy 0.1 (metamodel §14).
 pub const L_FMT_01: Code = Code("L-FMT-01");
 
@@ -119,6 +123,11 @@ pub const OTHER_CODES: &[CodeInfo] = &[
         code: L_FMT_01,
         subject: SubjectKind::Model,
         summary: "Missing version header (legacy 0.1)",
+    },
+    CodeInfo {
+        code: L_LAYOUT_OVERFLOW,
+        subject: SubjectKind::Diagram,
+        summary: "Layout iteration cap or page overflow",
     },
 ];
 
@@ -354,21 +363,28 @@ mod tests {
         assert_eq!(ours, spec);
     }
 
-    // validation §7.3 lists E-LIMIT-01 ("core / architecture") and E-METRICS ("layout"),
-    // both with subject model.
+    // Every OTHER_CODES entry has a validation §7 row with the same subject kind: E rows
+    // ("| `E-…`") in §7.3, L rows ("| L-…") in §7.2.
     #[test]
-    fn other_codes_are_in_validation_7_3() {
+    fn other_codes_match_validation_7() {
         let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../docs/spec/validation.md");
         let doc = std::fs::read_to_string(path).unwrap();
-        for (code, owner) in [
-            ("E-LIMIT-01", "core / architecture"),
-            ("E-METRICS", "| layout |"),
-        ] {
+        for info in OTHER_CODES {
+            let code = info.code.as_str();
             let row = doc
                 .lines()
-                .find(|l| l.starts_with(&format!("| `{code}`")))
-                .unwrap();
-            assert!(row.contains("| model |") && row.contains(owner), "{row}");
+                .find(|l| {
+                    l.starts_with(&format!("| `{code}`")) || l.starts_with(&format!("| {code} "))
+                })
+                .unwrap_or_else(|| panic!("{code} has no row in validation §7"));
+            let subject = match info.subject {
+                SubjectKind::Diagram => "diagram",
+                SubjectKind::Box => "box",
+                SubjectKind::Edge => "edge",
+                SubjectKind::Concept => "concept",
+                SubjectKind::Model => "model",
+            };
+            assert!(row.contains(&format!("| {subject} |")), "{code}: {row}");
         }
     }
 

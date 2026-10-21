@@ -6,6 +6,7 @@
 #![deny(clippy::unwrap_used)]
 
 pub mod metrics;
+pub mod place;
 pub mod ports;
 pub mod size;
 pub mod spike;
