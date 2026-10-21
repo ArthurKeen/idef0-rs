@@ -1,0 +1,39 @@
+# M4.0 layout spike measurements on the reference machine (architecture §15.3; ADR 0002).
+# Informative, not a gate: wall-clock is reported; instruction counts are deterministic.
+name: layout-spike
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "crates/idef0-layout/**"
+      - "scripts/layout-spike/**"
+      - "fixtures/bench/**"
+      - ".github/workflows/layout-spike.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    name: measure (ubuntu-24.04, native + callgrind + wasm32 under Node)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install the pinned toolchain and wasm32-wasip1
+        run: |
+          channel="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' rust-toolchain.toml)"
+          rustup toolchain install "$channel" --profile minimal --target wasm32-wasip1
+          rustc --version
+      - name: Install valgrind
+        run: sudo apt-get update -q && sudo apt-get install -y -q valgrind
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: scripts/layout-spike
+      - name: Measure
+        run: scripts/layout-spike/measure.sh | tee spike-results.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: layout-spike-results
+          path: spike-results.txt

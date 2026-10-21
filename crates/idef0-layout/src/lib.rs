@@ -4,3 +4,5 @@
 //!
 //! Pure Rust and wasm-safe (D6). Specification: `docs/spec/layout.md`.
 #![deny(clippy::unwrap_used)]
+
+pub mod spike;
