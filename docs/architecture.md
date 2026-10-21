@@ -365,9 +365,8 @@ pub fn apply(model: &Model, cmd: &Command, env: &mut Env<'_>) -> Result<(Model, 
 ```rust
 // (illustrative) idef0-core::diag; detail, fix and span arrive with lints, rules and the parser
 pub struct Diagnostic { severity: Severity, subject: SubjectRef, code: Code, layer: Layer, message: String }
-pub enum SubjectRef { Diagram(NodeId), Box(BoxKey), Edge(EdgeRef), Concept(ConceptKey), Model }
+pub enum SubjectRef { Diagram(NodeId), Box(BoxKey), Edge(ArrowId), Concept(ConceptKey), Model }
                                                   // one kind per code; order = canonical report order
-pub struct EdgeRef { diagram: NodeId, arrow: u32, part: Option<u32> }   // "A0:#3/1"; ArrowId from M1.4
 pub const E_CODES: &[CodeInfo];                   // core E codes = metamodel §18 (a test keeps them equal)
 
 pub struct SourceMap {                            // built by dsl::parse; kept beside the Model (SR-53)
@@ -401,10 +400,14 @@ Every Scene element carries its `ElementKey` (the `data-key` in SVG) and a `Fing
 ```rust
 // (illustrative) idef0-core::env
 pub trait Clock { fn today(&self) -> Date; }                      // diagram DATE fields, C-number history
-pub trait KeyMinter { fn box_key(&mut self, name: &str, taken: &dyn Fn(&BoxKey) -> bool) -> BoxKey; }
+pub trait KeyMinter {                             // idef0-core::identity (M1.4)
+    fn box_key(&mut self, name: &str, taken: &dyn Fn(&BoxKey) -> bool) -> BoxKey;
+    fn concept_key(&mut self, name: &str, taken: &dyn Fn(&ConceptKey) -> bool) -> ConceptKey;
+}                                                 // `taken` covers model keys and retired keys (D17)
+pub struct SlugMinter;                            // the normative slug rule + lowest free -2, -3 suffix
 pub struct Env<'a> { pub clock: &'a dyn Clock, pub keys: &'a mut dyn KeyMinter }
 // Native CLI/server: SystemClock (chrono-free, from SystemTime). Browser: WebClock (web-time).
-// Tests: FixedClock("2026-01-01"), DeterministicMinter (slug rule).
+// Tests: FixedClock("2026-01-01"); SlugMinter is stateless and deterministic, so tests use it too.
 ```
 
 ---

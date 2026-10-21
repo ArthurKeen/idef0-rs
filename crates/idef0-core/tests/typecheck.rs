@@ -172,8 +172,8 @@ fn bundles_are_typed_per_edge() {
     assert_eq!(
         found(&fork),
         [
-            ("E-TYPE-01".into(), "edge A0:#0".into()),
-            ("E-TYPE-02".into(), "edge A0:#0/1".into())
+            ("E-TYPE-01".into(), "edge A0:1I1->*#0".into()),
+            ("E-TYPE-02".into(), "edge A0:1I1->*#0/1".into())
         ]
     );
     let join = a0(
@@ -183,7 +183,10 @@ fn bundles_are_typed_per_edge() {
         ], "dst": {"side": "O", "icom": 1}}]),
         json!([]),
     );
-    assert_eq!(found(&join), [("E-TYPE-03".into(), "edge A0:#0/1".into())]);
+    assert_eq!(
+        found(&join),
+        [("E-TYPE-03".into(), "edge A0:*->O1#0/1".into())]
+    );
 }
 
 // --- FR-ARROW-04/05: port ranks per box side ---------------------------------------------------
@@ -199,7 +202,10 @@ fn ranks_without_gaps_or_duplicates() {
         Vec::<String>::new()
     );
     let gap = a0(json!([input(1), input(3)]), json!([]));
-    assert_eq!(found(&gap), [("E-TYPE-04".into(), "edge A0:#1".into())]);
+    assert_eq!(
+        found(&gap),
+        [("E-TYPE-04".into(), "edge A0:I3->1I3#0".into())]
+    );
     let zero = a0(json!([input(0)]), json!([]));
     assert_eq!(codes(&zero), ["E-TYPE-04"]);
     let dup = a0(
@@ -209,7 +215,10 @@ fn ranks_without_gaps_or_duplicates() {
         ]),
         json!([]),
     );
-    assert_eq!(found(&dup), [("E-TYPE-04".into(), "edge A0:#1".into())]);
+    assert_eq!(
+        found(&dup),
+        [("E-TYPE-04".into(), "edge A0:1O1->3I1#0".into())]
+    );
 }
 
 // FR-ARROW-05: fork branches share the source rank; join leaves share the destination rank.
@@ -236,7 +245,10 @@ fn bundles_share_their_trunk_rank() {
         ]}]),
         json!([]),
     );
-    assert_eq!(found(&twice), [("E-TYPE-04".into(), "edge A0:#0/1".into())]);
+    assert_eq!(
+        found(&twice),
+        [("E-TYPE-04".into(), "edge A0:1O1->*#0/1".into())]
+    );
 }
 
 // --- FR-TUN-01: `tunnel=box` needs exactly one box end ---------------------------------------
@@ -264,7 +276,7 @@ fn ambiguous_box_tunnel() {
     );
     assert_eq!(
         found(&branch),
-        [("E-TYPE-05".into(), "edge A0:#0/1".into())]
+        [("E-TYPE-05".into(), "edge A0:1O1->*#0/1".into())]
     );
 }
 
@@ -316,7 +328,13 @@ fn duplicate_arrow_keys() {
         ]),
         json!([]),
     );
-    assert_eq!(found(&m), [("E-ID-04".into(), "edge A0:#1/0".into())]);
+    assert_eq!(found(&m), [("E-ID-04".into(), "edge feed".into())]);
+    // Both arrows have the id `feed`, so the message names them by structural id.
+    let msg = &typecheck(&m)[0].message;
+    assert!(
+        msg.contains("on A0:1O1->*#0/0 is already used by A0:I1->1I1#0"),
+        "{msg}"
+    );
 }
 
 // --- metamodel §3.2, §16.3: box numbering and parent boxes -----------------------------------
@@ -442,7 +460,7 @@ fn findings_are_fatal_and_sorted() {
             ("E-NODE-02".into(), "diagram A-0".into()),
             ("E-CALL-02".into(), "box @a".into()),
             ("E-ID-02".into(), "box @a".into()),
-            ("E-TYPE-03".into(), "edge A0:#0".into()),
+            ("E-TYPE-03".into(), "edge A0:I1->O1#0".into()),
         ]
     );
     let again = typecheck(&m.clone());

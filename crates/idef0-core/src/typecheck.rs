@@ -12,9 +12,10 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::diag::{
     Diagnostic, E_CALL_02, E_ID_02, E_ID_04, E_NODE_02, E_NODE_03, E_NOTE_01, E_TYPE_01, E_TYPE_02,
-    E_TYPE_03, E_TYPE_04, E_TYPE_05, EdgeRef, SubjectRef,
+    E_TYPE_03, E_TYPE_04, E_TYPE_05, SubjectRef,
 };
 use crate::id::{NodeId, PortCode, Side};
+use crate::identity::{ArrowId, StatementIds, arrow_ids, structural_ids};
 use crate::model::{
     ArrowAttrs, ArrowShape, BoundaryPort, Diagram, DiagramKind, Endpoint, Model, NoteTarget, Tunnel,
 };
@@ -29,9 +30,10 @@ pub fn typecheck(model: &Model) -> Vec<Diagnostic> {
     for (node, diagram) in &model.diagrams {
         numbering(node, diagram, &mut out);
         parent_box(model, node, &mut out);
-        let edges = edges(node, diagram);
+        let ids = arrow_ids(node, diagram);
+        let edges = edges(&ids, diagram);
         typing(diagram, &edges, &mut out);
-        ranks(node, diagram, &mut out);
+        ranks(&ids, diagram, &mut out);
         calls(node, diagram, &mut out);
         notes(node, diagram, &edges, &mut out);
     }
@@ -44,34 +46,33 @@ pub fn typecheck(model: &Model) -> Vec<Diagnostic> {
 /// branch or leaf (or the plain arrow); `src_at` and `dst_at` are the statement elements that
 /// hold each endpoint, so a bad trunk endpoint is reported once, on the trunk.
 struct Edge<'a> {
-    at: EdgeRef,
-    src_at: EdgeRef,
-    dst_at: EdgeRef,
+    at: ArrowId,
+    src_at: ArrowId,
+    dst_at: ArrowId,
     src: &'a Endpoint,
     dst: &'a Endpoint,
     tunnel: Option<Tunnel>,
 }
 
-fn edge_ref(node: &NodeId, arrow: usize, part: Option<usize>) -> EdgeRef {
-    EdgeRef {
-        diagram: node.clone(),
-        arrow: u32::try_from(arrow).unwrap_or(u32::MAX),
-        part: part.map(|p| u32::try_from(p).unwrap_or(u32::MAX)),
-    }
+/// The id of an arrow statement, or of its `part`-th branch or leaf.
+fn id_at(ids: &[StatementIds], arrow: usize, part: Option<usize>) -> ArrowId {
+    let statement = &ids[arrow];
+    part.map_or(&statement.trunk, |p| &statement.parts[p])
+        .clone()
 }
 
 /// Every edge of a diagram: a plain arrow, each fork branch (trunk source to branch
 /// destination) and each join leaf (leaf source to trunk destination). A branch or leaf
 /// tunnel overrides the trunk's.
-fn edges<'a>(node: &NodeId, diagram: &'a Diagram) -> Vec<Edge<'a>> {
+fn edges<'a>(ids: &[StatementIds], diagram: &'a Diagram) -> Vec<Edge<'a>> {
     let mut out = Vec::new();
     for (i, arrow) in diagram.arrows.iter().enumerate() {
         let trunk = arrow.attrs.tunnel;
         match &arrow.shape {
             ArrowShape::Plain { src, dst } => out.push(Edge {
-                at: edge_ref(node, i, None),
-                src_at: edge_ref(node, i, None),
-                dst_at: edge_ref(node, i, None),
+                at: id_at(ids, i, None),
+                src_at: id_at(ids, i, None),
+                dst_at: id_at(ids, i, None),
                 src,
                 dst,
                 tunnel: trunk,
@@ -79,9 +80,9 @@ fn edges<'a>(node: &NodeId, diagram: &'a Diagram) -> Vec<Edge<'a>> {
             ArrowShape::Fork { src, fork } => {
                 for (j, b) in fork.iter().enumerate() {
                     out.push(Edge {
-                        at: edge_ref(node, i, Some(j)),
-                        src_at: edge_ref(node, i, None),
-                        dst_at: edge_ref(node, i, Some(j)),
+                        at: id_at(ids, i, Some(j)),
+                        src_at: id_at(ids, i, None),
+                        dst_at: id_at(ids, i, Some(j)),
                         src,
                         dst: &b.dst,
                         tunnel: b.attrs.tunnel.or(trunk),
@@ -91,9 +92,9 @@ fn edges<'a>(node: &NodeId, diagram: &'a Diagram) -> Vec<Edge<'a>> {
             ArrowShape::Join { join, dst } => {
                 for (j, l) in join.iter().enumerate() {
                     out.push(Edge {
-                        at: edge_ref(node, i, Some(j)),
-                        src_at: edge_ref(node, i, Some(j)),
-                        dst_at: edge_ref(node, i, None),
+                        at: id_at(ids, i, Some(j)),
+                        src_at: id_at(ids, i, Some(j)),
+                        dst_at: id_at(ids, i, None),
                         src: &l.src,
                         dst,
                         tunnel: l.attrs.tunnel.or(trunk),
@@ -152,8 +153,10 @@ fn box_keys(model: &Model, out: &mut Vec<Diagnostic>) {
 
 /// `E-ID-04`: an explicit arrow key is used more than once in the model (metamodel §3.4).
 fn arrow_keys(model: &Model, out: &mut Vec<Diagnostic>) {
-    let mut first: BTreeMap<&ArrowKey, EdgeRef> = BTreeMap::new();
+    let mut first: BTreeMap<&ArrowKey, ArrowId> = BTreeMap::new();
     for (node, diagram) in &model.diagrams {
+        let ids = arrow_ids(node, diagram);
+        let plain = structural_ids(node, diagram);
         for (i, arrow) in diagram.arrows.iter().enumerate() {
             let parts: Vec<(Option<usize>, &ArrowAttrs)> = match &arrow.shape {
                 ArrowShape::Plain { .. } => vec![],
@@ -170,12 +173,12 @@ fn arrow_keys(model: &Model, out: &mut Vec<Diagnostic>) {
             };
             for (part, attrs) in std::iter::once((None, &arrow.attrs)).chain(parts) {
                 let Some(key) = &attrs.key else { continue };
-                let here = edge_ref(node, i, part);
+                let here = id_at(&plain, i, part);
                 if let Some(earlier) = first.get(key) {
                     out.push(Diagnostic::fatal(
                         E_ID_04,
-                        SubjectRef::Edge(here),
-                        format!("arrow key `{key}` is already used by edge {earlier}"),
+                        SubjectRef::Edge(id_at(&ids, i, part)),
+                        format!("arrow key `{key}` on {here} is already used by {earlier}"),
                     ));
                 } else {
                     first.insert(key, here);
@@ -335,10 +338,10 @@ fn port(p: BoundaryPort) -> String {
 /// `E-TYPE-04`: per box side, the ranks are 1..n with no gap or duplicate. A fork's branches
 /// share its source rank and a join's leaves share its destination rank (FR-ARROW-05), so a
 /// trunk end counts once.
-fn ranks<'a>(node: &NodeId, diagram: &'a Diagram, out: &mut Vec<Diagnostic>) {
+fn ranks<'a>(ids: &[StatementIds], diagram: &'a Diagram, out: &mut Vec<Diagnostic>) {
     let on_diagram: BTreeSet<&BoxKey> = diagram.boxes.iter().map(|b| &b.key).collect();
-    let mut sides: BTreeMap<(&BoxKey, Side), Vec<(u8, EdgeRef)>> = BTreeMap::new();
-    let mut attach = |end: &'a Endpoint, at: EdgeRef| {
+    let mut sides: BTreeMap<(&BoxKey, Side), Vec<(u8, ArrowId)>> = BTreeMap::new();
+    let mut attach = |end: &'a Endpoint, at: ArrowId| {
         if let Endpoint::Box { key, side, rank } = end
             && on_diagram.contains(key)
         {
@@ -348,20 +351,20 @@ fn ranks<'a>(node: &NodeId, diagram: &'a Diagram, out: &mut Vec<Diagnostic>) {
     for (i, arrow) in diagram.arrows.iter().enumerate() {
         match &arrow.shape {
             ArrowShape::Plain { src, dst } => {
-                attach(src, edge_ref(node, i, None));
-                attach(dst, edge_ref(node, i, None));
+                attach(src, id_at(ids, i, None));
+                attach(dst, id_at(ids, i, None));
             }
             ArrowShape::Fork { src, fork } => {
-                attach(src, edge_ref(node, i, None));
+                attach(src, id_at(ids, i, None));
                 for (j, b) in fork.iter().enumerate() {
-                    attach(&b.dst, edge_ref(node, i, Some(j)));
+                    attach(&b.dst, id_at(ids, i, Some(j)));
                 }
             }
             ArrowShape::Join { join, dst } => {
                 for (j, l) in join.iter().enumerate() {
-                    attach(&l.src, edge_ref(node, i, Some(j)));
+                    attach(&l.src, id_at(ids, i, Some(j)));
                 }
-                attach(dst, edge_ref(node, i, None));
+                attach(dst, id_at(ids, i, None));
             }
         }
     }
