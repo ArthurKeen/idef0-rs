@@ -720,7 +720,7 @@ pub fn check(scene: &Scene) -> Vec<Diagnostic>;   // G-* (§15)
 
 ## 16. Performance budgets and benchmarks
 
-### 16.1 Budgets (provisional until the spikes report)
+### 16.1 Budgets (confirmed for layout by ADR 0002)
 
 | Operation | Size | Native | wasm32 (Chromium) |
 |---|---|---|---|
@@ -729,7 +729,7 @@ pub fn check(scene: &Scene) -> Vec<Diagnostic>;   // G-* (§15)
 | ASCII render | same | ≤ 1 ms | ≤ 2 ms |
 | Auto-Arrange (§12) | 7 boxes, 40 arrows, worst-case sides | ≤ 300 ms | ≤ 1 s, in the Web Worker |
 
-- Full layout plus render fits inside the keystroke budget NFR-PERF-01 (16 ms p95), together with validation, only if the wasm numbers hold. The **routing spike** (roadmap) measures them on the bench fixtures before M4.3 is accepted. If they fail, layout moves to the Web Worker and the UI shows the previous Scene until the new one arrives.
+- Full layout plus render fits inside the keystroke budget NFR-PERF-01 (16 ms p95), together with validation, only if the wasm numbers hold. The **routing spike** (M4.0, [ADR 0002](../adr/0002-layout-budgets-and-worker.md)) measured placement and global routing of `dense-7x40` at 0.55 ms p95 in wasm32 on the reference machine, so **layout runs on the main thread**. M4.5 re-measures full layout plus SVG; if wasm32 p95 exceeds 15 ms, layout moves to the Web Worker and the UI shows the previous Scene until the new one arrives.
 
 ### 16.2 Layout cost estimate
 
@@ -744,7 +744,7 @@ pub fn check(scene: &Scene) -> Vec<Diagnostic>;   // G-* (§15)
 - **Step 2:** one full layout (≈ 5 ms native), plus ≤ 28 sides × ≤ 720 permutations × ≤ 15 pair checks ≈ 0.3 M operations. Sides with more than 6 arrows use the heuristic, so a 9-arrow side costs O(m²) per sift pass rather than 9! permutations.
 - **Guard and delta:** two more full layouts.
 - **Expected total:** ≈ 15–25 ms native and ≈ 50–100 ms wasm. The budget of ≤ 1 s wasm leaves headroom for pathological fixtures.
-- The **Auto-Arrange spike** (roadmap) measures this on the worst-case fixture. The UI always runs Auto-Arrange in a Web Worker and shows a progress indicator after 200 ms.
+- The **Auto-Arrange spike** (M4.0, [ADR 0002](../adr/0002-layout-budgets-and-worker.md)) measured Step 1 on the worst-case fixture at 1.4 ms p95 in wasm32: the §12.2 bound reached 3 of 5,040 leaves. The UI still runs Auto-Arrange in a Web Worker and shows a progress indicator after 200 ms.
 
 ### 16.4 Benchmark policy
 
