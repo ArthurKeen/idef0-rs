@@ -1,0 +1,53 @@
+---
+source: crates/idef0-layout/tests/svg.rs
+expression: "svg(&model, node, theme)"
+---
+<svg xmlns="http://www.w3.org/2000/svg" width="352" height="416" viewBox="0 0 352 416" data-key="A-0" data-theme="fips183">
+<style data-key="style">.page{fill:#fff}.band,.cell,.frame{fill:none;stroke:#000;stroke-width:1}.box{fill:#fff;stroke:#000;stroke-width:2}.shadow{fill:#000}.arrow{fill:none;stroke:#000;stroke-width:1}.head{fill:#000}.mark{fill:#fff;stroke:#000;stroke-width:1}.mark.on{fill:#000}text{font-family:monospace;font-size:13px;fill:#000;font-kerning:none;font-variant-ligatures:none;white-space:pre}</style>
+<rect data-key="page" class="page" x="0" y="0" width="352" height="416"/>
+<rect data-key="form:working" class="band" x="0" y="0" width="352" height="80"/>
+<rect data-key="form:used-at" class="cell" x="0" y="0" width="64" height="80"/>
+<text data-key="form:used-at" class="field" x="8" y="12">USED…</text>
+<rect data-key="form:author" class="cell" x="64" y="0" width="104" height="80"/>
+<text data-key="form:author" class="field" x="72" y="12">AUTHOR: A.…</text>
+<text data-key="form:author" class="field" x="72" y="28">PROJECT: F…</text>
+<text data-key="form:author" class="field" x="72" y="44">DATE: </text>
+<rect data-key="form:status" class="cell" x="168" y="0" width="64" height="80"/>
+<rect data-key="form:status" class="mark on" x="176" y="4" width="8" height="8"/>
+<rect data-key="form:status" class="mark" x="176" y="20" width="8" height="8"/>
+<rect data-key="form:status" class="mark" x="176" y="36" width="8" height="8"/>
+<rect data-key="form:status" class="mark" x="176" y="52" width="8" height="8"/>
+<text data-key="form:status" class="field" x="192" y="12">WOR…</text>
+<text data-key="form:status" class="field" x="192" y="28">DRA…</text>
+<text data-key="form:status" class="field" x="192" y="44">REC…</text>
+<text data-key="form:status" class="field" x="192" y="60">PUB…</text>
+<rect data-key="form:reader" class="cell" x="232" y="0" width="40" height="80"/>
+<text data-key="form:reader" class="field" x="240" y="12">RE…</text>
+<text data-key="form:reader" class="field" x="240" y="28">DA…</text>
+<rect data-key="form:context" class="cell" x="272" y="0" width="80" height="80"/>
+<text data-key="form:context" class="field" x="280" y="12">CONTEXT:</text>
+<text data-key="form:context" class="field" x="280" y="28">TOP</text>
+<rect data-key="form:identification" class="band" x="0" y="384" width="352" height="32"/>
+<rect data-key="form:node" class="cell" x="0" y="384" width="88" height="32"/>
+<text data-key="form:node" class="field" x="8" y="396">NODE:</text>
+<text data-key="form:node" class="field" x="8" y="412">ORD/A-0</text>
+<rect data-key="form:title" class="cell" x="88" y="384" width="192" height="32"/>
+<text data-key="form:title" class="field" x="96" y="396">TITLE:</text>
+<text data-key="form:title" class="field" x="96" y="412">Fulfill Orders</text>
+<rect data-key="form:number" class="cell" x="280" y="384" width="72" height="32"/>
+<text data-key="form:number" class="field" x="288" y="396">NUMBER:</text>
+<text data-key="form:number" class="field" x="288" y="412"></text>
+<rect data-key="frame" class="frame" x="0" y="80" width="352" height="304"/>
+<rect data-key="fulfill-orders" class="box" x="96" y="176" width="160" height="96"/>
+<text data-key="fulfill-orders" class="title" x="120" y="220">Fulfill Orders</text>
+<text data-key="fulfill-orders" class="corner" x="240" y="264">0</text>
+<text data-key="fulfill-orders" class="dre" x="240" y="284">A0</text>
+<path data-key="A-0:0O1-&gt;O1#0" class="arrow" d="M256 224 L352 224"/>
+<path data-key="A-0:0O1-&gt;O1#0" class="head" d="M352 224 L344 228 L344 220 Z"/>
+<path data-key="A-0:C1-&gt;0C1#0" class="arrow" d="M176 80 L176 176"/>
+<path data-key="A-0:C1-&gt;0C1#0" class="head" d="M176 176 L172 168 L180 168 Z"/>
+<path data-key="A-0:I1-&gt;0I1#0" class="arrow" d="M0 224 L96 224"/>
+<path data-key="A-0:I1-&gt;0I1#0" class="head" d="M96 224 L88 228 L88 220 Z"/>
+<path data-key="A-0:M1-&gt;0M1#0" class="arrow" d="M176 384 L176 272"/>
+<path data-key="A-0:M1-&gt;0M1#0" class="head" d="M176 272 L180 280 L172 280 Z"/>
+</svg>

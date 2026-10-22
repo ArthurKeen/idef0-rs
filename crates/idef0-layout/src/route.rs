@@ -330,8 +330,11 @@ fn natural_entry(g: &Geo<'_>, frame_side: Side, other: End) -> i32 {
 /// coordinates in ICOM code order (the natural coordinates, sorted, handed out by code). When
 /// codes already increase with the natural order every arrow keeps its own coordinate.
 fn frame_order(g: &mut Geo<'_>, edges: &[Edge]) {
-    let mut coded: BTreeMap<Side, Vec<(u8, i32, usize)>> = BTreeMap::new();
-    let mut on_side: BTreeMap<Side, Vec<usize>> = BTreeMap::new();
+    // One boundary port is one point on the frame: the branches of a fork from it (or the
+    // leaves of a join into it) share its entry. A group's natural coordinate is its
+    // smallest matching-side member's, else its smallest member's.
+    type Group = (i32, bool, Vec<usize>);
+    let mut groups: BTreeMap<(Side, bool, u8, usize, usize), Group> = BTreeMap::new();
     for (i, e) in edges.iter().enumerate() {
         let (frame, other) = match (e.src, e.dst) {
             (End::Frame(s, code, border), other) | (other, End::Frame(s, code, border)) => {
@@ -340,14 +343,31 @@ fn frame_order(g: &mut Geo<'_>, edges: &[Edge]) {
             _ => continue,
         };
         let natural = natural_entry(g, frame.0, other);
-        on_side.entry(frame.0).or_default().push(i);
-        if frame.2 {
-            g.entry.insert(i, natural); // uncoded border ports have no code to order by
+        let matching =
+            frame.0 == Side::O || matches!(other, End::Box(_, role, _) if role == frame.0);
+        let key = (
+            frame.0,
+            frame.2,
+            frame.1,
+            e.bundle.unwrap_or(usize::MAX),
+            if e.bundle.is_some() { 0 } else { i },
+        );
+        let group = groups.entry(key).or_insert((natural, matching, Vec::new()));
+        if (matching && !group.1) || (matching == group.1 && natural < group.0) {
+            group.0 = natural;
+            group.1 = matching;
+        }
+        group.2.push(i);
+    }
+    let mut coded: BTreeMap<Side, Vec<(u8, i32, usize)>> = BTreeMap::new();
+    let mut on_side: BTreeMap<Side, Vec<usize>> = BTreeMap::new();
+    for (&(side, border, code, _, _), (natural, _, members)) in &groups {
+        let i = members[0];
+        on_side.entry(side).or_default().push(i);
+        if border {
+            g.entry.insert(i, *natural); // uncoded border ports have no code to order by
         } else {
-            coded
-                .entry(frame.0)
-                .or_default()
-                .push((frame.1, natural, i));
+            coded.entry(side).or_default().push((code, *natural, i));
         }
     }
     for list in coded.values_mut() {
@@ -358,6 +378,18 @@ fn frame_order(g: &mut Geo<'_>, edges: &[Edge]) {
             g.entry.insert(*i, c);
         }
     }
+    space_entries(g, on_side);
+    for (_, _, members) in groups.values() {
+        if let Some(&at) = g.entry.get(&members[0]) {
+            for &i in &members[1..] {
+                g.entry.insert(i, at);
+            }
+        }
+    }
+}
+
+/// Space the entries of `on_side` (one per boundary port) along their frame edges.
+fn space_entries(g: &mut Geo<'_>, on_side: BTreeMap<Side, Vec<usize>>) {
     // Two arrows never enter a frame edge at one point: walking each edge in coordinate
     // order, push every entry at least one track pitch past the previous, then walk back from
     // the far end so none passes the frame corner's clearance. Both walks keep the order, so
