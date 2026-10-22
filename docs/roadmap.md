@@ -95,7 +95,7 @@
 | Epic | Deliverable | Spec | Fixtures | Acceptance |
 |---|---|---|---|---|
 | M6.1 | `Mode`, `EditorState`, `Input`, `Effect`, `TRANSITIONS`; Normal, BoxNav, PortFocus | UX (FSM) | `fixtures/fsm/*.keys` | Table-driven tests |
-| M6.2 | Wiring (chords, fork/join, `Enter` confirm), TextEdit, Command, Confirm. Overlays: Help, Diagnostics, Glossary, ConceptPicker, Search, ArrangePreview, ProposalReview, Outline. Jump history. | UX | `.keys` scenarios incl. the SR-22 cases | Every transition row tested |
+| M6.2 | Wiring (chords, fork/join, `Enter` confirm), TextEdit, Command, Confirm. Core commands it is the first to issue: `Fork`, `Join`, `SetLabel`, `SetRel`, `SetTunnel`, `SetMeta`, concept commands (FR-EDIT-12) and note commands (FR-EDIT-16) ([metamodel §13.7](spec/metamodel.md#137-implementation-notes-m15)). Overlays: Help, Diagnostics, Glossary, ConceptPicker, Search, ArrangePreview, ProposalReview, Outline. Jump history. | UX | `.keys` scenarios incl. the SR-22 cases | Every transition row tested |
 | M6.3 | Selection-repair invariant; proptest over random input sequences | UX; TEST | generator | 10k cases green |
 | M6.4 | `cargo xtask gen-keymap --check`: generates the keymap, Help and state diagrams from `TRANSITIONS`; conflict test including reserved browser chords | UX (keymap) | — | Generated docs match the committed docs; conflict test passes |
 

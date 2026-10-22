@@ -25,6 +25,7 @@ macro_rules! serde_via_str {
     )*};
 }
 
+pub mod command;
 pub mod diag;
 pub mod dsl;
 pub mod id;

@@ -357,7 +357,7 @@ pub struct RenameMap {                            // consumed by sync to rewrite
 pub fn apply(model: &Model, cmd: &Command, env: &mut Env<'_>) -> Result<(Model, Patch), CommandError>;
 ```
 
-- `Op` is a low-level, invertible mutation (insert/remove/replace of one element). Ops are what undo inverts; Commands are what rebase re-applies.
+- `Op` is a low-level, invertible mutation (insert/remove/replace of one element). Ops are what undo inverts; Commands are what rebase re-applies. In v1 an op replaces one diagram, one concept or the metadata ([metamodel §13.7](spec/metamodel.md#137-implementation-notes-m15)).
 - Delete cascades, renumbering, `ReorderPorts` child re-coding and concept rename semantics are specified in [metamodel §editing semantics](spec/metamodel.md#13-editing-semantics-fr-edit).
 
 ### 4.4 Diagnostics and source spans
