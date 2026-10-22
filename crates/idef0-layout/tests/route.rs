@@ -594,3 +594,59 @@ fn wiring_goldens() {
         insta::assert_snapshot!(name, out.join("\n"));
     }
 }
+
+// FR-LAYOUT-22: one boundary port is one point on the frame. The branches of a fork from
+// it start at the same entry, so its code takes one slot and later codes keep theirs.
+#[test]
+fn fork_branches_share_their_entry() {
+    let src = "idef0 0.2\nmodel \"G\" {\n  abbrev \"GEN\"\n}\ndiagram A0 {\n  box 1 \"Box 1\"\n  box 2 \"Box 2\"\n  box 3 \"Box 3\"\n  arrow : M1 -> fork {\n    -> 1M\n    -> 3M\n  }\n  arrow : M2 -> 2M\n}\n";
+    let p = parse(src);
+    assert!(p.diagnostics.is_empty(), "{:?}", p.diagnostics);
+    let (_, _, r) = routes(&p.model.expect("model"), &NodeId::a0());
+    let start = |k: &str| {
+        r.routes
+            .iter()
+            .find(|x| x.key.to_string().starts_with(k))
+            .map(|x| x.path[0])
+            .expect("route")
+    };
+    assert_eq!(
+        start("A0:M1->*#0/0"),
+        start("A0:M1->*#0/1"),
+        "{}",
+        listing(&r)
+    );
+    let m2 = r
+        .routes
+        .iter()
+        .find(|x| x.key.to_string().starts_with("A0:M2"))
+        .expect("M2");
+    assert_eq!(
+        m2.class,
+        Class::BoundaryStraight,
+        "M2 keeps its own port's column"
+    );
+}
+
+// A fork's shared entry follows its matching-side branch: I1 forking into 2I and 1C enters
+// at box 2's input row, so that branch is straight and only the other one dog-legs.
+#[test]
+fn fork_entry_follows_the_matching_branch() {
+    let src = "idef0 0.2\nmodel \"G\" {\n  abbrev \"GEN\"\n}\ndiagram A0 {\n  box 1 \"Box 1\"\n  box 2 \"Box 2\"\n  arrow : I1 -> fork {\n    -> 2I\n    -> 1C\n  }\n}\n";
+    let p = parse(src);
+    assert!(p.diagnostics.is_empty(), "{:?}", p.diagnostics);
+    let (_, _, r) = routes(&p.model.expect("model"), &NodeId::a0());
+    let class = |k: &str| {
+        r.routes
+            .iter()
+            .find(|x| x.key.to_string().starts_with(k))
+            .map(|x| x.class)
+    };
+    assert_eq!(
+        class("A0:I1->*#0/0"),
+        Some(Class::BoundaryStraight),
+        "{}",
+        listing(&r)
+    );
+    assert_eq!(class("A0:I1->*#0/1"), Some(Class::BoundaryDogLeg));
+}

@@ -14,7 +14,7 @@ if command -v valgrind >/dev/null; then
   ir() { valgrind --tool=callgrind --callgrind-out-file=/dev/null "$bin" once "$1" 2>&1 | sed -n 's/.*Collected : \([0-9]*\).*/\1/p'; }
   base=$(ir noop)
   echo "op,instructions"
-  for op in parse place layout layout-dogfood layout-worst arrange1; do
+  for op in parse place layout layout-dogfood layout-worst arrange1 render; do
     echo "$op,$(( $(ir "$op") - base ))"
   done
 fi

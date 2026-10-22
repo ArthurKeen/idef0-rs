@@ -1,0 +1,73 @@
+---
+source: crates/idef0-layout/tests/svg.rs
+expression: "svg(&model, node, theme)"
+---
+<svg xmlns="http://www.w3.org/2000/svg" width="808" height="736" viewBox="0 0 808 736" data-key="A0" data-theme="fips183">
+<style data-key="style">.page{fill:#fff}.band,.cell,.frame{fill:none;stroke:#000;stroke-width:1}.box{fill:#fff;stroke:#000;stroke-width:2}.shadow{fill:#000}.arrow{fill:none;stroke:#000;stroke-width:1}.head{fill:#000}.mark{fill:#fff;stroke:#000;stroke-width:1}.mark.on{fill:#000}text{font-family:monospace;font-size:13px;fill:#000;font-kerning:none;font-variant-ligatures:none;white-space:pre}</style>
+<rect data-key="page" class="page" x="0" y="0" width="808" height="736"/>
+<rect data-key="form:working" class="band" x="0" y="0" width="808" height="80"/>
+<rect data-key="form:used-at" class="cell" x="0" y="0" width="144" height="80"/>
+<text data-key="form:used-at" class="field" x="8" y="12">USED AT:</text>
+<rect data-key="form:author" class="cell" x="144" y="0" width="248" height="80"/>
+<text data-key="form:author" class="field" x="152" y="12">AUTHOR: A. Author</text>
+<text data-key="form:author" class="field" x="152" y="28">PROJECT: Fixtures</text>
+<text data-key="form:author" class="field" x="152" y="44">DATE: 2026-10-20</text>
+<rect data-key="form:status" class="cell" x="392" y="0" width="144" height="80"/>
+<rect data-key="form:status" class="mark" x="400" y="4" width="8" height="8"/>
+<rect data-key="form:status" class="mark on" x="400" y="20" width="8" height="8"/>
+<rect data-key="form:status" class="mark" x="400" y="36" width="8" height="8"/>
+<rect data-key="form:status" class="mark" x="400" y="52" width="8" height="8"/>
+<text data-key="form:status" class="field" x="416" y="12">WORKING</text>
+<text data-key="form:status" class="field" x="416" y="28">DRAFT</text>
+<text data-key="form:status" class="field" x="416" y="44">RECOMMENDED</text>
+<text data-key="form:status" class="field" x="416" y="60">PUBLICATION</text>
+<rect data-key="form:reader" class="cell" x="536" y="0" width="96" height="80"/>
+<text data-key="form:reader" class="field" x="544" y="12">READER:</text>
+<text data-key="form:reader" class="field" x="544" y="28">DATE:</text>
+<rect data-key="form:context" class="cell" x="632" y="0" width="176" height="80"/>
+<rect data-key="form:context" class="mark on" x="652" y="36" width="20" height="12"/>
+<text data-key="form:context" class="field" x="640" y="12">CONTEXT:</text>
+<rect data-key="form:identification" class="band" x="0" y="704" width="808" height="32"/>
+<rect data-key="form:node" class="cell" x="0" y="704" width="200" height="32"/>
+<text data-key="form:node" class="field" x="8" y="716">NODE:</text>
+<text data-key="form:node" class="field" x="8" y="732">ORD/A0</text>
+<rect data-key="form:title" class="cell" x="200" y="704" width="448" height="32"/>
+<text data-key="form:title" class="field" x="208" y="716">TITLE:</text>
+<text data-key="form:title" class="field" x="208" y="732">Fulfill Orders</text>
+<rect data-key="form:number" class="cell" x="648" y="704" width="160" height="32"/>
+<text data-key="form:number" class="field" x="656" y="716">NUMBER:</text>
+<text data-key="form:number" class="field" x="656" y="732">AK15(AK14)</text>
+<rect data-key="frame" class="frame" x="0" y="80" width="808" height="624"/>
+<rect data-key="check-order" class="box" x="96" y="176" width="160" height="96"/>
+<text data-key="check-order" class="title" x="132" y="220">Check Order</text>
+<text data-key="check-order" class="corner" x="240" y="264">1</text>
+<rect data-key="ship-order" class="box" x="336" y="336" width="160" height="96"/>
+<text data-key="ship-order" class="title" x="376" y="380">Ship Order</text>
+<text data-key="ship-order" class="corner" x="480" y="424">2</text>
+<rect data-key="bill-customer" class="box" x="552" y="496" width="160" height="96"/>
+<text data-key="bill-customer" class="title" x="580" y="540">Bill Customer</text>
+<text data-key="bill-customer" class="corner" x="696" y="584">3</text>
+<text data-key="bill-customer" class="dre" x="696" y="604">A3</text>
+<path data-key="A0:*-&gt;O1#0/0" class="arrow" d="M496 384 L808 384"/>
+<path data-key="A0:*-&gt;O1#0/0" class="head" d="M808 384 L800 388 L800 380 Z"/>
+<path data-key="A0:*-&gt;O1#0/1" class="arrow" d="M712 560 L728 560 L728 384 L808 384"/>
+<path data-key="A0:*-&gt;O1#0/1" class="head" d="M808 384 L800 388 L800 380 Z"/>
+<path data-key="A0:1O1-&gt;*#0/0" class="arrow" d="M256 224 L272 224 L272 384 L336 384"/>
+<path data-key="A0:1O1-&gt;*#0/0" class="head" d="M336 384 L328 388 L328 380 Z"/>
+<path data-key="A0:1O1-&gt;*#0/1" class="arrow" d="M256 224 L296 224 L296 544 L552 544"/>
+<path data-key="A0:1O1-&gt;*#0/1" class="head" d="M552 544 L544 548 L544 540 Z"/>
+<path data-key="A0:3O1-&gt;[O1]#0" class="arrow" d="M712 528 L808 528"/>
+<path data-key="A0:3O1-&gt;[O1]#0" class="head" d="M808 528 L800 532 L800 524 Z"/>
+<path data-key="A0:C1-&gt;1C1#0" class="arrow" d="M176 80 L176 176"/>
+<path data-key="A0:C1-&gt;1C1#0" class="head" d="M176 176 L172 168 L180 168 Z"/>
+<path data-key="A0:C1-&gt;3C1#0" class="arrow" d="M632 80 L632 496"/>
+<path data-key="A0:C1-&gt;3C1#0" class="head" d="M632 496 L628 488 L636 488 Z"/>
+<path data-key="A0:M1-&gt;1M1#0" class="arrow" d="M176 704 L176 272"/>
+<path data-key="A0:M1-&gt;1M1#0" class="head" d="M176 272 L180 280 L172 280 Z"/>
+<path data-key="A0:[C1]-&gt;2C1#0" class="arrow" d="M416 80 L416 336"/>
+<path data-key="A0:[C1]-&gt;2C1#0" class="head" d="M416 336 L412 328 L420 328 Z"/>
+<path data-key="order-feed" class="arrow" d="M0 224 L96 224"/>
+<path data-key="order-feed" class="head" d="M96 224 L88 228 L88 220 Z"/>
+<path data-key="call @ship-order" class="arrow" d="M416 432 L416 704"/>
+<path data-key="call @ship-order" class="head" d="M416 704 L412 696 L420 696 Z"/>
+</svg>

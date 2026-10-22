@@ -6,8 +6,9 @@
 //!                              `once noop` (which only parses the fixtures) to isolate `<op>`
 //!
 //! Operations: `parse`, `place` (sizing and one staircase placement), `layout` (placement
-//! iteration with global routing), `layout-dogfood`, `layout-worst`, `arrange1` (Auto-Arrange
-//! step 1 on the worst case).
+//! iteration, global routing and track assignment), `layout-dogfood`, `layout-worst`,
+//! `arrange1` (Auto-Arrange step 1 on the worst case), `render` (the Scene and its SVG, the
+//! ADR 0002 re-check at M4.5).
 
 use std::hint::black_box;
 use std::time::Instant;
@@ -18,7 +19,9 @@ use idef0_core::model::Model;
 use idef0_layout::metrics::Metrics;
 use idef0_layout::place::{EdgeAllowance, Gaps, Tracks, box_plans, place};
 use idef0_layout::route::{Routed, layout_routes};
+use idef0_layout::scene::{self, LayoutInput, ThemeId};
 use idef0_layout::spike::{arrange_box_order, diagram};
+use idef0_layout::svg::{self, SvgOptions};
 use idef0_layout::text::TextMetric;
 
 const DENSE: &str = include_str!("../../../fixtures/bench/dense-7x40.idef0");
@@ -55,6 +58,17 @@ fn run(op: &str, dense: &Model, worst: &Model, dogfood: &Model) {
         "layout-worst" => {
             black_box(layout(worst));
         }
+        "render" => {
+            let metrics = Metrics::default();
+            let input = LayoutInput {
+                theme: ThemeId::Modern,
+                metrics: &metrics,
+            };
+            let scene = scene::layout(dense, &NodeId::a0(), &input)
+                .expect("A0")
+                .scene;
+            black_box(svg::render(&scene, &SvgOptions::default()));
+        }
         "arrange1" => {
             black_box(arrange_box_order(diagram(worst, "A0").expect("A0")));
         }
@@ -85,13 +99,14 @@ fn facts(name: &str, r: &Routed) {
     );
 }
 
-const OPS: [&str; 6] = [
+const OPS: [&str; 7] = [
     "parse",
     "place",
     "layout",
     "layout-dogfood",
     "layout-worst",
     "arrange1",
+    "render",
 ];
 
 fn main() {
@@ -107,6 +122,23 @@ fn main() {
     facts("dense-7x40", &layout(&dense));
     facts("arrange-worst-7", &layout(&worst));
     facts("dogfood", &layout(&dogfood));
+    // D6: the SVG bytes, compared across native and wasm32 by measure.sh's caller
+    for (name, m) in [("dense-7x40", &dense), ("dogfood", &dogfood)] {
+        let metrics = Metrics::default();
+        let input = LayoutInput {
+            theme: ThemeId::Modern,
+            metrics: &metrics,
+        };
+        let out = svg::render(
+            &scene::layout(m, &NodeId::a0(), &input).expect("A0").scene,
+            &SvgOptions::default(),
+        );
+        // FNV-1a, 64-bit
+        let hash = out.bytes().fold(0xcbf2_9ce4_8422_2325_u64, |h, b| {
+            (h ^ u64::from(b)).wrapping_mul(0x0100_0000_01b3)
+        });
+        println!("{name} svg: bytes={} fnv={hash:016x}", out.len());
+    }
     let wd = diagram(&worst, "A0").expect("A0");
     let a = arrange_box_order(wd);
     println!(

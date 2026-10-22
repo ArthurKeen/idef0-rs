@@ -111,7 +111,10 @@ Built-ins from `clap`: `idef0 help [COMMAND]`, `idef0 --version`, and `idef0 com
 - **`facts`** dumps the sorted extracted facts as Mangle text, accepted by the chosen rule parser. `--external` adds code and PRD facts.
 - **`index`** prints the FIPS node index: indented node numbers with diagram titles and box names. It is unrelated to the workspace model index that `scan` maintains.
 - **`render`**:
-  - without `NODE`, it renders every diagram into `--out DIR`;
+  - without `NODE`, it renders every diagram into `--out DIR`, one `<node>.svg` file each (`A-0.svg`, `A21.svg`);
+  - with `NODE`, it writes one diagram to stdout, or to the file `--out` names. `NODE` may also be a box key (`@validate-order`): that names the diagram detailing the box;
+  - a model with errors (`E-*`) is reported and exits 1 without rendering; syntax errors exit 2;
+  - M4.5 status: `--svg` with `--text ref` (the default until the bundled fonts arrive in M5.5), themes `modern`, `fips183` and `retro` (which shares the `modern` Scene), and model resolution rule 1 (a file path). `--txt`, `--png`, `--publication`, `--check`, `--text embed|paths` and `--theme classic` exit 2, naming the epic that brings them;
   - `--check` runs the geometry checker and prints `G-*` findings, which are layout bugs, exiting 1 if any are found;
   - PNG needs the rasterizer named in [architecture](architecture.md#71-capability-split) and is outside D6.
 - **`arrange`** prints the delta (`feedback arcs 3→1, crossings 7→2`) and the Patch. `--apply` writes it as one atomic change, including `ReorderPorts` child re-coding and the RenameMap for `sync`. Optional proposals are included only when named in `--include` ([layout](spec/layout.md#12-auto-arrange)). v0.1 called this `:optimize-ports` and described it as "optimal"; it is neither.

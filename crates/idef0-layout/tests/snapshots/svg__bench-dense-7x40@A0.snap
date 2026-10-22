@@ -1,0 +1,142 @@
+---
+source: crates/idef0-layout/tests/svg.rs
+expression: "svg(&model, node, theme)"
+---
+<svg xmlns="http://www.w3.org/2000/svg" width="2016" height="2256" viewBox="0 0 2016 2256" data-key="A0" data-theme="modern">
+<style data-key="style">.page{fill:#fff}.band,.cell,.frame{fill:none;stroke:#000;stroke-width:1}.box{fill:#fff;stroke:#000;stroke-width:2}.shadow{fill:#000}.arrow{fill:none;stroke:#000;stroke-width:1}.head{fill:#000}.mark{fill:#fff;stroke:#000;stroke-width:1}.mark.on{fill:#000}text{font-family:monospace;font-size:13px;fill:#000;font-kerning:none;font-variant-ligatures:none;white-space:pre}</style>
+<rect data-key="page" class="page" x="0" y="0" width="2016" height="2256"/>
+<rect data-key="form:working" class="band" x="0" y="0" width="2016" height="80"/>
+<rect data-key="form:used-at" class="cell" x="0" y="0" width="376" height="80"/>
+<text data-key="form:used-at" class="field" x="8" y="12">USED AT:</text>
+<rect data-key="form:author" class="cell" x="376" y="0" width="624" height="80"/>
+<text data-key="form:author" class="field" x="384" y="12">AUTHOR: </text>
+<text data-key="form:author" class="field" x="384" y="28">PROJECT: </text>
+<text data-key="form:author" class="field" x="384" y="44">DATE: </text>
+<rect data-key="form:status" class="cell" x="1000" y="0" width="376" height="80"/>
+<rect data-key="form:status" class="mark on" x="1008" y="4" width="8" height="8"/>
+<rect data-key="form:status" class="mark" x="1008" y="20" width="8" height="8"/>
+<rect data-key="form:status" class="mark" x="1008" y="36" width="8" height="8"/>
+<rect data-key="form:status" class="mark" x="1008" y="52" width="8" height="8"/>
+<text data-key="form:status" class="field" x="1024" y="12">WORKING</text>
+<text data-key="form:status" class="field" x="1024" y="28">DRAFT</text>
+<text data-key="form:status" class="field" x="1024" y="44">RECOMMENDED</text>
+<text data-key="form:status" class="field" x="1024" y="60">PUBLICATION</text>
+<rect data-key="form:reader" class="cell" x="1376" y="0" width="248" height="80"/>
+<text data-key="form:reader" class="field" x="1384" y="12">READER:</text>
+<text data-key="form:reader" class="field" x="1384" y="28">DATE:</text>
+<rect data-key="form:context" class="cell" x="1624" y="0" width="392" height="80"/>
+<rect data-key="form:context" class="mark on" x="1644" y="36" width="20" height="12"/>
+<text data-key="form:context" class="field" x="1632" y="12">CONTEXT:</text>
+<rect data-key="form:identification" class="band" x="0" y="2224" width="2016" height="32"/>
+<rect data-key="form:node" class="cell" x="0" y="2224" width="504" height="32"/>
+<text data-key="form:node" class="field" x="8" y="2236">NODE:</text>
+<text data-key="form:node" class="field" x="8" y="2252">DNS/A0</text>
+<rect data-key="form:title" class="cell" x="504" y="2224" width="1128" height="32"/>
+<text data-key="form:title" class="field" x="512" y="2236">TITLE:</text>
+<text data-key="form:title" class="field" x="512" y="2252">Fulfill Orders</text>
+<rect data-key="form:number" class="cell" x="1632" y="2224" width="384" height="32"/>
+<text data-key="form:number" class="field" x="1640" y="2236">NUMBER:</text>
+<text data-key="form:number" class="field" x="1640" y="2252"></text>
+<rect data-key="frame" class="frame" x="0" y="80" width="2016" height="2144"/>
+<rect data-key="plan-orders" class="box" x="176" y="304" width="160" height="128"/>
+<text data-key="plan-orders" class="title" x="212" y="364">Plan Orders</text>
+<text data-key="plan-orders" class="corner" x="312" y="424">A1</text>
+<rect data-key="check-credit" class="box" x="440" y="560" width="160" height="160"/>
+<text data-key="check-credit" class="title" x="472" y="636">Check Credit</text>
+<text data-key="check-credit" class="corner" x="576" y="712">A2</text>
+<rect data-key="pick-goods" class="box" x="704" y="816" width="160" height="128"/>
+<text data-key="pick-goods" class="title" x="744" y="876">Pick Goods</text>
+<text data-key="pick-goods" class="corner" x="840" y="936">A3</text>
+<rect data-key="pack-shipment" class="box" x="968" y="1008" width="160" height="192"/>
+<text data-key="pack-shipment" class="title" x="996" y="1100">Pack Shipment</text>
+<text data-key="pack-shipment" class="corner" x="1104" y="1192">A4</text>
+<rect data-key="ship-goods" class="box" x="1232" y="1328" width="160" height="192"/>
+<text data-key="ship-goods" class="title" x="1272" y="1420">Ship Goods</text>
+<text data-key="ship-goods" class="corner" x="1368" y="1512">A5</text>
+<rect data-key="bill-customer" class="box" x="1496" y="1584" width="160" height="192"/>
+<text data-key="bill-customer" class="title" x="1524" y="1676">Bill Customer</text>
+<text data-key="bill-customer" class="corner" x="1632" y="1768">A6</text>
+<rect data-key="close-orders" class="box" x="1760" y="1904" width="160" height="192"/>
+<text data-key="close-orders" class="title" x="1792" y="1996">Close Orders</text>
+<text data-key="close-orders" class="corner" x="1896" y="2088">A7</text>
+<path data-key="A0:1O1-&gt;2I3#0" class="arrow" d="M336 336 L376 336 L376 656 L440 656"/>
+<path data-key="A0:1O1-&gt;2I3#0" class="head" d="M440 656 L432 660 L432 652 Z"/>
+<path data-key="A0:1O2-&gt;3C2#0" class="arrow" d="M336 368 L768 368 L768 816"/>
+<path data-key="A0:1O2-&gt;3C2#0" class="head" d="M768 816 L764 808 L772 808 Z"/>
+<path data-key="A0:1O3-&gt;4M1#0" class="arrow" d="M336 400 L352 400 L352 1216 L1048 1216 L1048 1200"/>
+<path data-key="A0:1O3-&gt;4M1#0" class="head" d="M1048 1200 L1052 1208 L1044 1208 Z"/>
+<path data-key="A0:2O1-&gt;3I1#0" class="arrow" d="M600 592 L664 592 L664 880 L704 880"/>
+<path data-key="A0:2O1-&gt;3I1#0" class="head" d="M704 880 L696 884 L696 876 Z"/>
+<path data-key="A0:2O2-&gt;4C2#0" class="arrow" d="M600 624 L1072 624 L1072 1008"/>
+<path data-key="A0:2O2-&gt;4C2#0" class="head" d="M1072 1008 L1068 1000 L1076 1000 Z"/>
+<path data-key="A0:2O3-&gt;6M1#0" class="arrow" d="M600 656 L640 656 L640 1792 L1576 1792 L1576 1776"/>
+<path data-key="A0:2O3-&gt;6M1#0" class="head" d="M1576 1776 L1580 1784 L1572 1784 Z"/>
+<path data-key="A0:2O4-&gt;2C3#0" class="arrow" d="M600 688 L616 688 L616 512 L560 512 L560 560"/>
+<path data-key="A0:2O4-&gt;2C3#0" class="head" d="M560 560 L556 552 L564 552 Z"/>
+<path data-key="A0:3O1-&gt;4I1#0" class="arrow" d="M864 848 L928 848 L928 1056 L968 1056"/>
+<path data-key="A0:3O1-&gt;4I1#0" class="head" d="M968 1056 L960 1060 L960 1052 Z"/>
+<path data-key="A0:3O2-&gt;5C1#0" class="arrow" d="M864 880 L1288 880 L1288 1328"/>
+<path data-key="A0:3O2-&gt;5C1#0" class="head" d="M1288 1328 L1284 1320 L1292 1320 Z"/>
+<path data-key="A0:3O3-&gt;7M1#0" class="arrow" d="M864 912 L880 912 L880 2112 L1840 2112 L1840 2096"/>
+<path data-key="A0:3O3-&gt;7M1#0" class="head" d="M1840 2096 L1844 2104 L1836 2104 Z"/>
+<path data-key="A0:4O1-&gt;5I1#0" class="arrow" d="M1128 1040 L1192 1040 L1192 1424 L1232 1424"/>
+<path data-key="A0:4O1-&gt;5I1#0" class="head" d="M1232 1424 L1224 1428 L1224 1420 Z"/>
+<path data-key="A0:4O2-&gt;6C2#0" class="arrow" d="M1128 1072 L1600 1072 L1600 1584"/>
+<path data-key="A0:4O2-&gt;6C2#0" class="head" d="M1600 1584 L1596 1576 L1604 1576 Z"/>
+<path data-key="A0:4O3-&gt;2C1#0" class="arrow" d="M1128 1104 L1168 1104 L1168 448 L480 448 L480 560"/>
+<path data-key="A0:4O3-&gt;2C1#0" class="head" d="M480 560 L476 552 L484 552 Z"/>
+<path data-key="A0:4O4-&gt;2M1#0" class="arrow" d="M1128 1136 L1168 1136 L1168 1280 L520 1280 L520 720"/>
+<path data-key="A0:4O4-&gt;2M1#0" class="head" d="M520 720 L524 728 L516 728 Z"/>
+<path data-key="A0:4O5-&gt;4I3#0" class="arrow" d="M1128 1168 L1144 1168 L1144 1248 L928 1248 L928 1152 L968 1152"/>
+<path data-key="A0:4O5-&gt;4I3#0" class="head" d="M968 1152 L960 1156 L960 1148 Z"/>
+<path data-key="A0:5O1-&gt;6I1#0" class="arrow" d="M1392 1360 L1456 1360 L1456 1680 L1496 1680"/>
+<path data-key="A0:5O1-&gt;6I1#0" class="head" d="M1496 1680 L1488 1684 L1488 1676 Z"/>
+<path data-key="A0:5O2-&gt;7C1#0" class="arrow" d="M1392 1392 L1840 1392 L1840 1904"/>
+<path data-key="A0:5O2-&gt;7C1#0" class="head" d="M1840 1904 L1836 1896 L1844 1896 Z"/>
+<path data-key="A0:5O3-&gt;1C2#0" class="arrow" d="M1392 1424 L1408 1424 L1408 256 L280 256 L280 304"/>
+<path data-key="A0:5O3-&gt;1C2#0" class="head" d="M280 304 L276 296 L284 296 Z"/>
+<path data-key="A0:5O4-&gt;3C4#0" class="arrow" d="M1392 1456 L1432 1456 L1432 768 L832 768 L832 816"/>
+<path data-key="A0:5O4-&gt;3C4#0" class="head" d="M832 816 L828 808 L836 808 Z"/>
+<path data-key="A0:5O5-&gt;1I3#0" class="arrow" d="M1392 1488 L1408 1488 L1408 1536 L88 1536 L88 400 L176 400"/>
+<path data-key="A0:5O5-&gt;1I3#0" class="head" d="M176 400 L168 404 L168 396 Z"/>
+<path data-key="A0:6O1-&gt;7I1#0" class="arrow" d="M1656 1616 L1720 1616 L1720 2000 L1760 2000"/>
+<path data-key="A0:6O1-&gt;7I1#0" class="head" d="M1760 2000 L1752 2004 L1752 1996 Z"/>
+<path data-key="A0:6O2-&gt;3C3#0" class="arrow" d="M1656 1648 L1672 1648 L1672 736 L800 736 L800 816"/>
+<path data-key="A0:6O2-&gt;3C3#0" class="head" d="M800 816 L796 808 L804 808 Z"/>
+<path data-key="A0:6O3-&gt;2I4#0" class="arrow" d="M1656 1680 L1696 1680 L1696 1856 L400 1856 L400 688 L440 688"/>
+<path data-key="A0:6O3-&gt;2I4#0" class="head" d="M440 688 L432 692 L432 684 Z"/>
+<path data-key="A0:6O4-&gt;1M1#0" class="arrow" d="M1656 1712 L1672 1712 L1672 1824 L256 1824 L256 432"/>
+<path data-key="A0:6O4-&gt;1M1#0" class="head" d="M256 432 L260 440 L252 440 Z"/>
+<path data-key="A0:6O5-&gt;O1#0" class="arrow" d="M1656 1744 L2016 1744"/>
+<path data-key="A0:6O5-&gt;O1#0" class="head" d="M2016 1744 L2008 1748 L2008 1740 Z"/>
+<path data-key="A0:7O1-&gt;5C2#0" class="arrow" d="M1920 1936 L1936 1936 L1936 1216 L1336 1216 L1336 1328"/>
+<path data-key="A0:7O1-&gt;5C2#0" class="head" d="M1336 1328 L1332 1320 L1340 1320 Z"/>
+<path data-key="A0:7O2-&gt;2C2#0" class="arrow" d="M1920 1968 L1960 1968 L1960 480 L520 480 L520 560"/>
+<path data-key="A0:7O2-&gt;2C2#0" class="head" d="M520 560 L516 552 L524 552 Z"/>
+<path data-key="A0:7O3-&gt;4I2#0" class="arrow" d="M1920 2000 L1936 2000 L1936 2144 L904 2144 L904 1104 L968 1104"/>
+<path data-key="A0:7O3-&gt;4I2#0" class="head" d="M968 1104 L960 1108 L960 1100 Z"/>
+<path data-key="A0:7O4-&gt;3M2#0" class="arrow" d="M1920 2032 L1960 2032 L1960 2176 L808 2176 L808 944"/>
+<path data-key="A0:7O4-&gt;3M2#0" class="head" d="M808 944 L812 952 L804 952 Z"/>
+<path data-key="A0:7O5-&gt;O2#0" class="arrow" d="M1920 2064 L2016 2064"/>
+<path data-key="A0:7O5-&gt;O2#0" class="head" d="M2016 2064 L2008 2068 L2008 2060 Z"/>
+<path data-key="A0:C1-&gt;1C1#0" class="arrow" d="M16 80 L16 256 L232 256 L232 304"/>
+<path data-key="A0:C1-&gt;1C1#0" class="head" d="M232 304 L228 296 L236 296 Z"/>
+<path data-key="A0:C2-&gt;3C1#0" class="arrow" d="M232 80 L232 192 L736 192 L736 816"/>
+<path data-key="A0:C2-&gt;3C1#0" class="head" d="M736 816 L732 808 L740 808 Z"/>
+<path data-key="A0:C3-&gt;4C1#0" class="arrow" d="M736 80 L736 160 L1024 160 L1024 1008"/>
+<path data-key="A0:C3-&gt;4C1#0" class="head" d="M1024 1008 L1020 1000 L1028 1000 Z"/>
+<path data-key="A0:C4-&gt;2I2#0" class="arrow" d="M1024 80 L1024 128 L112 128 L112 624 L440 624"/>
+<path data-key="A0:C4-&gt;2I2#0" class="head" d="M440 624 L432 628 L432 620 Z"/>
+<path data-key="A0:I1-&gt;1I1#0" class="arrow" d="M0 96 L136 96 L136 336 L176 336"/>
+<path data-key="A0:I1-&gt;1I1#0" class="head" d="M176 336 L168 340 L168 332 Z"/>
+<path data-key="A0:I2-&gt;1I2#0" class="arrow" d="M0 336 L88 336 L88 368 L176 368"/>
+<path data-key="A0:I2-&gt;1I2#0" class="head" d="M176 368 L168 372 L168 364 Z"/>
+<path data-key="A0:I3-&gt;2I1#0" class="arrow" d="M0 368 L64 368 L64 592 L440 592"/>
+<path data-key="A0:I3-&gt;2I1#0" class="head" d="M440 592 L432 596 L432 588 Z"/>
+<path data-key="A0:I4-&gt;6C1#0" class="arrow" d="M0 592 L40 592 L40 224 L1552 224 L1552 1584"/>
+<path data-key="A0:I4-&gt;6C1#0" class="head" d="M1552 1584 L1548 1576 L1556 1576 Z"/>
+<path data-key="A0:M1-&gt;3M1#0" class="arrow" d="M760 2224 L760 944"/>
+<path data-key="A0:M1-&gt;3M1#0" class="head" d="M760 944 L764 952 L756 952 Z"/>
+<path data-key="A0:M2-&gt;5M1#0" class="arrow" d="M1312 2224 L1312 1520"/>
+<path data-key="A0:M2-&gt;5M1#0" class="head" d="M1312 1520 L1316 1528 L1308 1528 Z"/>
+</svg>

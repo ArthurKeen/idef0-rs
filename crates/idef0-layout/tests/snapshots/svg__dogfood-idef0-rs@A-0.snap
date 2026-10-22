@@ -1,0 +1,65 @@
+---
+source: crates/idef0-layout/tests/svg.rs
+expression: "svg(&model, node, theme)"
+---
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="432" viewBox="0 0 360 432" data-key="A-0" data-theme="modern">
+<style data-key="style">.page{fill:#fff}.band,.cell,.frame{fill:none;stroke:#000;stroke-width:1}.box{fill:#fff;stroke:#000;stroke-width:2}.shadow{fill:#000}.arrow{fill:none;stroke:#000;stroke-width:1}.head{fill:#000}.mark{fill:#fff;stroke:#000;stroke-width:1}.mark.on{fill:#000}text{font-family:monospace;font-size:13px;fill:#000;font-kerning:none;font-variant-ligatures:none;white-space:pre}</style>
+<rect data-key="page" class="page" x="0" y="0" width="360" height="432"/>
+<rect data-key="form:working" class="band" x="0" y="0" width="360" height="80"/>
+<rect data-key="form:used-at" class="cell" x="0" y="0" width="64" height="80"/>
+<text data-key="form:used-at" class="field" x="8" y="12">USED…</text>
+<rect data-key="form:author" class="cell" x="64" y="0" width="112" height="80"/>
+<text data-key="form:author" class="field" x="72" y="12">AUTHOR: AK</text>
+<text data-key="form:author" class="field" x="72" y="28">PROJECT: </text>
+<text data-key="form:author" class="field" x="72" y="44">DATE: </text>
+<rect data-key="form:status" class="cell" x="176" y="0" width="64" height="80"/>
+<rect data-key="form:status" class="mark on" x="184" y="4" width="8" height="8"/>
+<rect data-key="form:status" class="mark" x="184" y="20" width="8" height="8"/>
+<rect data-key="form:status" class="mark" x="184" y="36" width="8" height="8"/>
+<rect data-key="form:status" class="mark" x="184" y="52" width="8" height="8"/>
+<text data-key="form:status" class="field" x="200" y="12">WOR…</text>
+<text data-key="form:status" class="field" x="200" y="28">DRA…</text>
+<text data-key="form:status" class="field" x="200" y="44">REC…</text>
+<text data-key="form:status" class="field" x="200" y="60">PUB…</text>
+<rect data-key="form:reader" class="cell" x="240" y="0" width="40" height="80"/>
+<text data-key="form:reader" class="field" x="248" y="12">RE…</text>
+<text data-key="form:reader" class="field" x="248" y="28">DA…</text>
+<rect data-key="form:context" class="cell" x="280" y="0" width="80" height="80"/>
+<text data-key="form:context" class="field" x="288" y="12">CONTEXT:</text>
+<text data-key="form:context" class="field" x="288" y="28">TOP</text>
+<rect data-key="form:identification" class="band" x="0" y="400" width="360" height="32"/>
+<rect data-key="form:node" class="cell" x="0" y="400" width="88" height="32"/>
+<text data-key="form:node" class="field" x="8" y="412">NODE:</text>
+<text data-key="form:node" class="field" x="8" y="428">IR/A-0</text>
+<rect data-key="form:title" class="cell" x="88" y="400" width="200" height="32"/>
+<text data-key="form:title" class="field" x="96" y="412">TITLE:</text>
+<text data-key="form:title" class="field" x="96" y="428">Model System Requireme…</text>
+<rect data-key="form:number" class="cell" x="288" y="400" width="72" height="32"/>
+<text data-key="form:number" class="field" x="296" y="412">NUMBER:</text>
+<text data-key="form:number" class="field" x="296" y="428">AK1</text>
+<rect data-key="frame" class="frame" x="0" y="80" width="360" height="320"/>
+<rect data-key="model-system" class="shadow" x="104" y="192" width="160" height="96"/>
+<rect data-key="model-system" class="box" x="96" y="176" width="160" height="96"/>
+<text data-key="model-system" class="title" x="128" y="212">Model System</text>
+<text data-key="model-system" class="title" x="128" y="228">Requirements</text>
+<text data-key="model-system" class="corner" x="232" y="264">A0</text>
+<text data-key="model-system" class="dre" x="248" y="300">A0</text>
+<path data-key="A-0:0O1-&gt;O1#0" class="arrow" d="M256 208 L360 208"/>
+<path data-key="A-0:0O1-&gt;O1#0" class="head" d="M360 208 L352 212 L352 204 Z"/>
+<path data-key="A-0:0O2-&gt;O2#0" class="arrow" d="M256 240 L360 240"/>
+<path data-key="A-0:0O2-&gt;O2#0" class="head" d="M360 240 L352 244 L352 236 Z"/>
+<path data-key="A-0:C1-&gt;0C1#0" class="arrow" d="M136 80 L136 176"/>
+<path data-key="A-0:C1-&gt;0C1#0" class="head" d="M136 176 L132 168 L140 168 Z"/>
+<path data-key="A-0:C2-&gt;0C2#0" class="arrow" d="M176 80 L176 176"/>
+<path data-key="A-0:C2-&gt;0C2#0" class="head" d="M176 176 L172 168 L180 168 Z"/>
+<path data-key="A-0:C3-&gt;0C3#0" class="arrow" d="M216 80 L216 176"/>
+<path data-key="A-0:C3-&gt;0C3#0" class="head" d="M216 176 L212 168 L220 168 Z"/>
+<path data-key="A-0:I1-&gt;0I1#0" class="arrow" d="M0 208 L96 208"/>
+<path data-key="A-0:I1-&gt;0I1#0" class="head" d="M96 208 L88 212 L88 204 Z"/>
+<path data-key="A-0:I2-&gt;0I2#0" class="arrow" d="M0 240 L96 240"/>
+<path data-key="A-0:I2-&gt;0I2#0" class="head" d="M96 240 L88 244 L88 236 Z"/>
+<path data-key="A-0:M1-&gt;0M1#0" class="arrow" d="M152 400 L152 272"/>
+<path data-key="A-0:M1-&gt;0M1#0" class="head" d="M152 272 L156 280 L148 280 Z"/>
+<path data-key="A-0:M2-&gt;0M2#0" class="arrow" d="M200 400 L200 272"/>
+<path data-key="A-0:M2-&gt;0M2#0" class="head" d="M200 272 L204 280 L196 280 Z"/>
+</svg>

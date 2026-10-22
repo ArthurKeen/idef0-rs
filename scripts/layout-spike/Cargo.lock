@@ -50,6 +50,7 @@ name = "idef0-layout"
 version = "0.1.0"
 dependencies = [
  "idef0-core",
+ "thiserror",
  "unicode-segmentation",
  "unicode-width",
 ]

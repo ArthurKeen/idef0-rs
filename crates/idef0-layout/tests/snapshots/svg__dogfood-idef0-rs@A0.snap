@@ -1,0 +1,99 @@
+---
+source: crates/idef0-layout/tests/svg.rs
+expression: "svg(&model, node, theme)"
+---
+<svg xmlns="http://www.w3.org/2000/svg" width="1264" height="1264" viewBox="0 0 1264 1264" data-key="A0" data-theme="modern">
+<style data-key="style">.page{fill:#fff}.band,.cell,.frame{fill:none;stroke:#000;stroke-width:1}.box{fill:#fff;stroke:#000;stroke-width:2}.shadow{fill:#000}.arrow{fill:none;stroke:#000;stroke-width:1}.head{fill:#000}.mark{fill:#fff;stroke:#000;stroke-width:1}.mark.on{fill:#000}text{font-family:monospace;font-size:13px;fill:#000;font-kerning:none;font-variant-ligatures:none;white-space:pre}</style>
+<rect data-key="page" class="page" x="0" y="0" width="1264" height="1264"/>
+<rect data-key="form:working" class="band" x="0" y="0" width="1264" height="80"/>
+<rect data-key="form:used-at" class="cell" x="0" y="0" width="232" height="80"/>
+<text data-key="form:used-at" class="field" x="8" y="12">USED AT:</text>
+<rect data-key="form:author" class="cell" x="232" y="0" width="392" height="80"/>
+<text data-key="form:author" class="field" x="240" y="12">AUTHOR: AK</text>
+<text data-key="form:author" class="field" x="240" y="28">PROJECT: </text>
+<text data-key="form:author" class="field" x="240" y="44">DATE: </text>
+<rect data-key="form:status" class="cell" x="624" y="0" width="232" height="80"/>
+<rect data-key="form:status" class="mark" x="632" y="4" width="8" height="8"/>
+<rect data-key="form:status" class="mark on" x="632" y="20" width="8" height="8"/>
+<rect data-key="form:status" class="mark" x="632" y="36" width="8" height="8"/>
+<rect data-key="form:status" class="mark" x="632" y="52" width="8" height="8"/>
+<text data-key="form:status" class="field" x="648" y="12">WORKING</text>
+<text data-key="form:status" class="field" x="648" y="28">DRAFT</text>
+<text data-key="form:status" class="field" x="648" y="44">RECOMMENDED</text>
+<text data-key="form:status" class="field" x="648" y="60">PUBLICATION</text>
+<rect data-key="form:reader" class="cell" x="856" y="0" width="152" height="80"/>
+<text data-key="form:reader" class="field" x="864" y="12">READER:</text>
+<text data-key="form:reader" class="field" x="864" y="28">DATE:</text>
+<rect data-key="form:context" class="cell" x="1008" y="0" width="256" height="80"/>
+<rect data-key="form:context" class="mark on" x="1028" y="36" width="20" height="12"/>
+<text data-key="form:context" class="field" x="1016" y="12">CONTEXT:</text>
+<rect data-key="form:identification" class="band" x="0" y="1232" width="1264" height="32"/>
+<rect data-key="form:node" class="cell" x="0" y="1232" width="312" height="32"/>
+<text data-key="form:node" class="field" x="8" y="1244">NODE:</text>
+<text data-key="form:node" class="field" x="8" y="1260">IR/A0</text>
+<rect data-key="form:title" class="cell" x="312" y="1232" width="704" height="32"/>
+<text data-key="form:title" class="field" x="320" y="1244">TITLE:</text>
+<text data-key="form:title" class="field" x="320" y="1260">Model System Requirements</text>
+<rect data-key="form:number" class="cell" x="1016" y="1232" width="248" height="32"/>
+<text data-key="form:number" class="field" x="1024" y="1244">NUMBER:</text>
+<text data-key="form:number" class="field" x="1024" y="1260">AK2</text>
+<rect data-key="frame" class="frame" x="0" y="80" width="1264" height="1152"/>
+<rect data-key="ingest" class="box" x="96" y="304" width="160" height="96"/>
+<text data-key="ingest" class="title" x="152" y="340">Ingest</text>
+<text data-key="ingest" class="title" x="120" y="356">Specifications</text>
+<text data-key="ingest" class="corner" x="232" y="392">A1</text>
+<rect data-key="author" class="box" x="312" y="496" width="160" height="96"/>
+<text data-key="author" class="title" x="320" y="540">Author Draft Model</text>
+<text data-key="author" class="corner" x="448" y="584">A2</text>
+<rect data-key="validate" class="box" x="576" y="656" width="160" height="96"/>
+<text data-key="validate" class="title" x="600" y="692">Validate Model</text>
+<text data-key="validate" class="title" x="636" y="708">Rules</text>
+<text data-key="validate" class="corner" x="712" y="744">A3</text>
+<rect data-key="layout" class="box" x="792" y="816" width="160" height="96"/>
+<text data-key="layout" class="title" x="808" y="860">Lay Out Diagrams</text>
+<text data-key="layout" class="corner" x="928" y="904">A4</text>
+<rect data-key="trace" class="box" x="1008" y="976" width="160" height="96"/>
+<text data-key="trace" class="title" x="1016" y="1012">Trace Implementing</text>
+<text data-key="trace" class="title" x="1072" y="1028">Code</text>
+<text data-key="trace" class="corner" x="1144" y="1064">A5</text>
+<path data-key="A0:1O1-&gt;2I1#0" class="arrow" d="M256 352 L272 352 L272 544 L312 544"/>
+<path data-key="A0:1O1-&gt;2I1#0" class="head" d="M312 544 L304 548 L304 540 Z"/>
+<path data-key="A0:2O1-&gt;*#0/0" class="arrow" d="M472 544 L488 544 L488 688 L576 688"/>
+<path data-key="A0:2O1-&gt;*#0/0" class="head" d="M576 688 L568 692 L568 684 Z"/>
+<path data-key="A0:2O1-&gt;*#0/1" class="arrow" d="M472 544 L512 544 L512 864 L792 864"/>
+<path data-key="A0:2O1-&gt;*#0/1" class="head" d="M792 864 L784 868 L784 860 Z"/>
+<path data-key="A0:3O1-&gt;2C1#0" class="arrow" d="M736 688 L752 688 L752 416 L368 416 L368 496"/>
+<path data-key="A0:3O1-&gt;2C1#0" class="head" d="M368 496 L364 488 L372 488 Z"/>
+<path data-key="A0:3O2-&gt;O1#0" class="arrow" d="M736 720 L1264 720"/>
+<path data-key="A0:3O2-&gt;O1#0" class="head" d="M1264 720 L1256 724 L1256 716 Z"/>
+<path data-key="A0:4O1-&gt;2C2#0" class="arrow" d="M952 864 L968 864 L968 448 L416 448 L416 496"/>
+<path data-key="A0:4O1-&gt;2C2#0" class="head" d="M416 496 L412 488 L420 488 Z"/>
+<path data-key="A0:5O1-&gt;3I2#0" class="arrow" d="M1168 1008 L1184 1008 L1184 1088 L536 1088 L536 720 L576 720"/>
+<path data-key="A0:5O1-&gt;3I2#0" class="head" d="M576 720 L568 724 L568 716 Z"/>
+<path data-key="A0:5O2-&gt;O2#0" class="arrow" d="M1168 1040 L1264 1040"/>
+<path data-key="A0:5O2-&gt;O2#0" class="head" d="M1264 1040 L1256 1044 L1256 1036 Z"/>
+<path data-key="A0:C1-&gt;*#0/0" class="arrow" d="M176 80 L176 192 L632 192 L632 656"/>
+<path data-key="A0:C1-&gt;*#0/0" class="head" d="M632 656 L628 648 L636 648 Z"/>
+<path data-key="A0:C1-&gt;*#0/1" class="arrow" d="M176 80 L176 224 L872 224 L872 816"/>
+<path data-key="A0:C1-&gt;*#0/1" class="head" d="M872 816 L868 808 L876 808 Z"/>
+<path data-key="A0:C2-&gt;3C2#0" class="arrow" d="M632 80 L632 160 L680 160 L680 656"/>
+<path data-key="A0:C2-&gt;3C2#0" class="head" d="M680 656 L676 648 L684 648 Z"/>
+<path data-key="A0:C3-&gt;*#0/0" class="arrow" d="M680 80 L680 96 L424 96 L424 256 L176 256 L176 304"/>
+<path data-key="A0:C3-&gt;*#0/0" class="head" d="M176 304 L172 296 L180 296 Z"/>
+<path data-key="A0:C3-&gt;*#0/1" class="arrow" d="M680 80 L680 128 L1088 128 L1088 976"/>
+<path data-key="A0:C3-&gt;*#0/1" class="head" d="M1088 976 L1084 968 L1092 968 Z"/>
+<path data-key="A0:I1-&gt;1I1#0" class="arrow" d="M0 352 L96 352"/>
+<path data-key="A0:I1-&gt;1I1#0" class="head" d="M96 352 L88 356 L88 348 Z"/>
+<path data-key="A0:I2-&gt;5I1#0" class="arrow" d="M0 1024 L1008 1024"/>
+<path data-key="A0:I2-&gt;5I1#0" class="head" d="M1008 1024 L1000 1028 L1000 1020 Z"/>
+<path data-key="A0:M1-&gt;*#0/0" class="arrow" d="M176 1232 L176 400"/>
+<path data-key="A0:M1-&gt;*#0/0" class="head" d="M176 400 L180 408 L172 408 Z"/>
+<path data-key="A0:M1-&gt;*#0/1" class="arrow" d="M176 1232 L176 1120 L656 1120 L656 752"/>
+<path data-key="A0:M1-&gt;*#0/1" class="head" d="M656 752 L660 760 L652 760 Z"/>
+<path data-key="A0:M1-&gt;*#0/2" class="arrow" d="M176 1232 L176 1152 L872 1152 L872 912"/>
+<path data-key="A0:M1-&gt;*#0/2" class="head" d="M872 912 L876 920 L868 920 Z"/>
+<path data-key="A0:M1-&gt;*#0/3" class="arrow" d="M176 1232 L176 1184 L1088 1184 L1088 1072"/>
+<path data-key="A0:M1-&gt;*#0/3" class="head" d="M1088 1072 L1092 1080 L1084 1080 Z"/>
+<path data-key="A0:M2-&gt;2M1#0" class="arrow" d="M392 1232 L392 592"/>
+<path data-key="A0:M2-&gt;2M1#0" class="head" d="M392 592 L396 600 L388 600 Z"/>
+</svg>
