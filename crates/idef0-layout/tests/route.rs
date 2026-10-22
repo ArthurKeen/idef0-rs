@@ -24,9 +24,13 @@ fn load(path: &Path) -> Model {
 }
 
 fn routes(model: &Model, node: &NodeId) -> (Vec<Rect>, (i32, i32), Routing) {
-    let (placed, r) =
+    let x =
         layout_routes(model, node, true, TextMetric::Mono, &Metrics::default()).expect("diagram");
-    (placed.placement.boxes, placed.placement.frame, r)
+    (
+        x.placed.placement.boxes,
+        x.placed.placement.frame,
+        x.routing,
+    )
 }
 
 fn listing(r: &Routing) -> String {
@@ -73,7 +77,15 @@ fn template_fixtures() {
     insta::glob!("../../../fixtures/layout/templates", "*.idef0", |path| {
         let stem = path.file_stem().and_then(|s| s.to_str()).expect("name");
         let model = load(path);
-        let (_, _, r) = routes(&model, &NodeId::a0());
+        let x = layout_routes(
+            &model,
+            &NodeId::a0(),
+            true,
+            TextMetric::Mono,
+            &Metrics::default(),
+        )
+        .expect("A0");
+        let r = &x.routing;
         let probe = r
             .routes
             .iter()
@@ -86,9 +98,32 @@ fn template_fixtures() {
         assert!(
             r.routes.iter().all(|x| !x.forced),
             "{stem}: forced route\n{}",
-            listing(&r)
+            listing(r)
         );
-        insta::assert_snapshot!(listing(&r));
+        // M4.4: the wired polyline under each route, and the tracks each channel uses
+        let wired: Vec<String> = r
+            .routes
+            .iter()
+            .zip(&x.wiring.paths)
+            .map(|(route, p)| {
+                let p: Vec<String> = p.iter().map(|(a, b)| format!("({a},{b})")).collect();
+                format!("{} wired={}", route.key, p.join(" "))
+            })
+            .collect();
+        let used: Vec<String> = x
+            .wiring
+            .channels
+            .iter()
+            .filter(|c| c.tracks > 0)
+            .map(|c| format!("{:?}={}", c.channel, c.tracks))
+            .collect();
+        insta::assert_snapshot!(format!(
+            "{}\n{}\ntracks {} crossings {}",
+            listing(r),
+            wired.join("\n"),
+            used.join(" "),
+            x.wiring.crossings
+        ));
     });
 }
 
@@ -155,7 +190,8 @@ fn reroute_keeps_frozen_parameters() {
     let model = load(&path);
     let node = NodeId::a0();
     let m = Metrics::default();
-    let (placed, r) = layout_routes(&model, &node, true, TextMetric::Mono, &m).expect("A0");
+    let x = layout_routes(&model, &node, true, TextMetric::Mono, &m).expect("A0");
+    let (placed, r) = (x.placed, x.routing);
     let diagram = &model.diagrams[&node];
     let counts = idef0_layout::place::port_counts(diagram);
     let id = "A0:3O1->2C1#0";
@@ -204,7 +240,11 @@ fn density_counts_overlapping_runs() {
     ];
     r.routes.truncate(spans.len());
     for (x, (channel, span)) in r.routes.iter_mut().zip(spans) {
-        x.legs = vec![Leg { channel, span }];
+        x.legs = vec![Leg {
+            channel,
+            span,
+            seg: 0,
+        }];
     }
     let t = r.density(n);
     assert_eq!(t.v, vec![0, 3, 0, 0, 0, 0]);
@@ -352,4 +392,205 @@ fn crowded_frame_edge() {
         );
     }
     assert!(r.routes.iter().all(|x| !x.forced), "{}", listing(&r));
+}
+
+fn collinear_overlap(a: ((i32, i32), (i32, i32)), b: ((i32, i32), (i32, i32))) -> bool {
+    let h = |s: ((i32, i32), (i32, i32))| s.0.1 == s.1.1;
+    let span = |p: i32, q: i32| (p.min(q), p.max(q));
+    if h(a) && h(b) && a.0.1 == b.0.1 {
+        let (a0, a1) = span(a.0.0, a.1.0);
+        let (b0, b1) = span(b.0.0, b.1.0);
+        a0.max(b0) < a1.min(b1)
+    } else if !h(a) && !h(b) && a.0.0 == b.0.0 {
+        let (a0, a1) = span(a.0.1, a.1.1);
+        let (b0, b1) = span(b.0.1, b.1.1);
+        a0.max(b0) < a1.min(b1)
+    } else {
+        false
+    }
+}
+
+/// Every M4.4 property of one diagram's wiring, as a list of violations.
+#[allow(
+    clippy::many_single_char_names,
+    reason = "geometry names: a, b, k, m, p, r, s, w"
+)]
+fn wiring_violations(model: &Model) -> Vec<String> {
+    let m = Metrics::default();
+    let x = layout_routes(model, &NodeId::a0(), true, TextMetric::Mono, &m).expect("A0");
+    let (p, r, w) = (&x.placed.placement, &x.routing, &x.wiring);
+    let mut bad = Vec::new();
+    for (i, (route, path)) in r.routes.iter().zip(&w.paths).enumerate() {
+        let k = &route.key;
+        if path.first() != route.path.first() || path.last() != route.path.last() {
+            bad.push(format!("{k}: ends moved {path:?}"));
+        }
+        let last = path.len().saturating_sub(2);
+        for (s, seg) in path.windows(2).enumerate() {
+            let (a, b) = (seg[0], seg[1]);
+            if a.0 != b.0 && a.1 != b.1 {
+                bad.push(format!("{k}: not orthogonal {path:?}"));
+            }
+            let len = (a.0 - b.0).abs() + (a.1 - b.1).abs();
+            let min = if s == 0 || s == last {
+                m.clear
+            } else {
+                2 * m.r_fillet / 4
+            };
+            if len < min {
+                bad.push(format!("{k}: segment {s} is {len} gu {path:?}"));
+            }
+            for bx in &p.boxes {
+                if passes_inside(a, b, *bx) {
+                    bad.push(format!("{k}: enters a box {path:?}"));
+                }
+            }
+            for (j, (other, op)) in r.routes.iter().zip(&w.paths).enumerate() {
+                if j <= i || (route.bundle.is_some() && route.bundle == other.bundle) {
+                    continue;
+                }
+                for t in op.windows(2) {
+                    if collinear_overlap((a, b), (t[0], t[1])) {
+                        bad.push(format!("{k} overlaps {}: {path:?} / {op:?}", other.key));
+                    }
+                }
+            }
+        }
+        for &(px, py) in path {
+            if px % 2 != 0
+                || py % 4 != 0
+                || !(0..=p.frame.0).contains(&px)
+                || !(0..=p.frame.1).contains(&py)
+            {
+                bad.push(format!("{k}: vertex ({px},{py}) off the lattice or frame"));
+            }
+        }
+    }
+    for c in &w.channels {
+        for &(a, b) in &c.hard {
+            if c.segments[a].track >= c.segments[b].track {
+                bad.push(format!("{:?}: hard edge {a} -> {b} violated", c.channel));
+            }
+        }
+        if c.dropped > 0 {
+            bad.push(format!(
+                "{:?}: {} hard cycles dropped",
+                c.channel, c.dropped
+            ));
+        }
+        if c.tracks < c.density || c.tracks < c.hard_path {
+            bad.push(format!(
+                "{:?}: {} tracks < density {} or hard path {}",
+                c.channel, c.tracks, c.density, c.hard_path
+            ));
+        }
+    }
+    bad
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig { cases: 256, ..ProptestConfig::default() })]
+
+    // Roadmap M4.4 acceptance: the VCG is respected, every channel has at least as many tracks
+    // as its density, the final polylines keep the §6.3 and §8.2 rules, and the result is
+    // deterministic.
+    #[test]
+    fn wiring_is_valid(
+        n in 1usize..8,
+        arrows in proptest::collection::vec((0usize..7, 0usize..7, 0u8..3), 0..18),
+        boundary in proptest::collection::vec((0u8..9, 0usize..7), 0..10),
+        outs in proptest::collection::vec(0usize..7, 0..4),
+        calls in proptest::collection::vec(0usize..7, 0..3),
+    ) {
+        let src = generated(n, &arrows, &boundary, &outs, &calls);
+        let model = parse(&src).model.expect("model");
+        let bad = wiring_violations(&model);
+        prop_assert!(bad.is_empty(), "{src}\n{bad:#?}");
+        let m = Metrics::default();
+        let a = layout_routes(&model, &NodeId::a0(), true, TextMetric::Mono, &m).expect("A0");
+        let b = layout_routes(&model, &NodeId::a0(), true, TextMetric::Mono, &m).expect("A0");
+        prop_assert_eq!(a, b);
+    }
+}
+
+// The M4.4 properties on every committed fixture with an A0.
+#[test]
+fn fixtures_wire_cleanly() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../fixtures");
+    for f in [
+        "bench/dense-7x40.idef0",
+        "bench/arrange-worst-7.idef0",
+        "dogfood/idef0-rs.idef0",
+    ] {
+        let bad = wiring_violations(&load(&root.join(f)));
+        assert!(bad.is_empty(), "{f}: {bad:#?}");
+    }
+    for e in std::fs::read_dir(root.join("layout/templates")).expect("templates") {
+        let path = e.expect("entry").path();
+        let bad = wiring_violations(&load(&path));
+        assert!(bad.is_empty(), "{}: {bad:#?}", path.display());
+    }
+}
+
+// Roadmap M4.4 acceptance (testing §11): crossings stay at or below the committed baseline.
+// Lower the baseline when a change improves it; raise it only with a `baseline:` reason.
+#[test]
+fn crossings_within_baseline() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../fixtures");
+    let text =
+        std::fs::read_to_string(root.join("layout/baselines/crossings.json")).expect("baseline");
+    let baseline: std::collections::BTreeMap<String, usize> =
+        serde_json::from_str(&text).expect("baseline JSON");
+    // every benchmark diagram has a baseline
+    for e in std::fs::read_dir(root.join("bench")).expect("bench") {
+        let name = e.expect("entry").file_name().to_string_lossy().into_owned();
+        assert!(
+            baseline.contains_key(&format!("bench/{name}")),
+            "no baseline for bench/{name}"
+        );
+    }
+    let m = Metrics::default();
+    for (f, &limit) in &baseline {
+        let model = load(&root.join(f));
+        let x = layout_routes(&model, &NodeId::a0(), true, TextMetric::Mono, &m).expect("A0");
+        let got = x.wiring.crossings;
+        assert!(got <= limit, "{f}: {got} crossings > baseline {limit}");
+        if got < limit {
+            eprintln!("{f}: {got} crossings, below the baseline {limit}: lower it");
+        }
+    }
+}
+
+// M4.4 goldens: the track of every channel segment on the benchmark and dogfood diagrams.
+// Sifting keeps a swap only when crossings fall, so ties keep the left-edge order.
+#[test]
+fn wiring_goldens() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../fixtures");
+    for f in ["bench/dense-7x40.idef0", "dogfood/idef0-rs.idef0"] {
+        let model = load(&root.join(f));
+        let x = layout_routes(
+            &model,
+            &NodeId::a0(),
+            true,
+            TextMetric::Mono,
+            &Metrics::default(),
+        )
+        .expect("A0");
+        let mut out = vec![format!("crossings {}", x.wiring.crossings)];
+        for c in x.wiring.channels.iter().filter(|c| c.tracks > 0) {
+            let segs: Vec<String> = c
+                .segments
+                .iter()
+                .map(|s| format!("{}.{}={}", s.key, s.part, s.track))
+                .collect();
+            out.push(format!(
+                "{:?} tracks={} {}",
+                c.channel,
+                c.tracks,
+                segs.join(" ")
+            ));
+        }
+        let name = f.replace(['/', '.'], "-");
+        insta::assert_snapshot!(name, out.join("\n"));
+    }
 }

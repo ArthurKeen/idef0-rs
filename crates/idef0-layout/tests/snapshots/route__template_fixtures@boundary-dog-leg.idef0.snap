@@ -1,6 +1,8 @@
 ---
 source: crates/idef0-layout/tests/route.rs
-expression: listing(&r)
+expression: "format!(\"{}\\n{}\\ntracks {} crossings {}\", listing(r), wired.join(\"\\n\"),\nused.join(\" \"), x.wiring.crossings)"
 input_file: fixtures/layout/templates/boundary-dog-leg.idef0
 ---
-probe BoundaryDogLeg params=[] cost=336 path=(12,0) (12,12) (12,116) (132,116)
+probe BoundaryDogLeg params=[] cost=344 path=(4,0) (4,116) (132,116)
+probe wired=(4,0) (4,116) (132,116)
+tracks V(0)=1 crossings 0

@@ -267,6 +267,7 @@ dependencies = [
  "idef0-core",
  "insta",
  "proptest",
+ "serde_json",
  "unicode-segmentation",
  "unicode-width",
 ]

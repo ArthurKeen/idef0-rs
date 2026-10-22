@@ -284,7 +284,7 @@ Each arrow is routed by a template chosen by its class `(src i, dst j, dst role)
 | `i=j`, M | self mechanism loop ("down and under") | E → V_i ↓ to H_r → W to x(M_i) → ↑ | 3 | `r ∈ [i, n]` (prefer `i`) |
 | boundary, matching side | straight | one segment | 0 | — |
 | boundary, frame-order dog-leg | dog-leg | from the frame entry along the side's margin channel (`V_0` for I, `H_0` for C, `H_n` for M) to the port's row or column | 2 | — |
-| boundary, role shift | dog-leg | from the frame entry into the margin channel beside that frame edge, then along the margin channels `V_0`, `H_0`, `H_n` to the one beside the port's side, then into the port | 2–4 | — |
+| boundary, role shift | dog-leg | an entry inside the margin channel it turns into (at least `clear` from the boxes) runs straight along that margin as a fixed run; any other entry turns into the margin channel beside its frame edge, then travels the margin channels `V_0`, `H_0`, `H_n` to the one beside the port's side, then into the port | 1–4 | — |
 | `i →` boundary O | output exit | E from O_i to the right frame; if frame order moves the exit, via `V_n` | 0 or 2 | — |
 | call | call (FR-LAYOUT-06, -23) | ↓ from the call port through the column band below box *i* to the bottom frame | 0 | — |
 | "to all" | stub (FR-LAYOUT-18) | short stub to the label "to all ‹concept›"; no per-box routing | 0 | — |
@@ -305,7 +305,7 @@ A candidate is **rejected** (infinite cost) if it:
 
 The keep-out rule exempts the box at either end of the route: a terminal segment touches its own box at the port and is rejected only if it enters the box's interior (FR-LAYOUT-05). Global routing puts every channel run on its channel's center line, because track assignment (§7) spreads the runs later. The collinear rule therefore applies only to fixed segments, the ones outside channel runs; overlapping runs in a channel are what its density counts.
 
-**Frame entries (FR-LAYOUT-22).** Before routing, each boundary arrow gets its point on the frame edge. Its *natural* coordinate is the port's row or column for a matching side. For a role shift, it is the center line of the margin channel it turns into: `H_0` for I into C, `H_n` for I into M, and `V_0` for C or M into another role. The natural coordinates on one frame edge are sorted and handed out in ICOM code order. Uncoded `[ ]` border ports keep their own. Then, in coordinate order, every entry moves at least one track pitch (`pitch_y` on I and O, `pitch_x` on C and M) past the previous one. A backward pass then keeps every entry at least `clear` from the frame corners. Both passes keep the order. An arrow whose entry differs from its port's coordinate routes as a dog-leg.
+**Frame entries (FR-LAYOUT-22).** Before routing, each boundary arrow gets its point on the frame edge. Its *natural* coordinate is the port's row or column for a matching side. For a role shift, it is track 0 (§7.2) of the margin channel it turns into: `H_0` for I into C, `H_n` for I into M, and `V_0` for C or M into another role. The natural coordinates on one frame edge are sorted and handed out in ICOM code order. Uncoded `[ ]` border ports keep their own. Then, in coordinate order, every entry moves at least one track pitch (`pitch_y` on I and O, `pitch_x` on C and M) past the previous one, so role-shift entries land on that margin's track coordinates. Entries inside `V_0` on the bottom edge start one pitch past those on the top edge, so the two never share a `V_0` track. A backward pass then keeps every entry at least `clear` from the frame corners. These passes keep the order. An arrow whose entry differs from its port's coordinate routes as a dog-leg.
 
 ### 6.4 Search (implementation choice)
 
@@ -346,6 +346,16 @@ Barycenter ordering is thus an **input** to the track assigner (as soft edges), 
 - The track count of each channel feeds the gap sizing in §5.2.
 
 Output: every arrow becomes an orthogonal polyline `P = [p_0 … p_m]` of alternating horizontal and vertical segments, with all vertices on the lattice.
+
+### 7.3 Implementation notes
+
+These choices are idef0-rs implementation details, not FIPS rules.
+
+- **Channel order.** Vertical channels are assigned first, `V_0 … V_n`, then `H_0 … H_n`. A vertical segment ending in a horizontal channel that is not assigned yet takes that channel's whole band as its interval there, so no two such segments share a track wherever the horizontal tracks land. Horizontal channels then see the exact column of every end. Hard edges come only from ends whose coordinate is exact.
+- **Fixed runs.** A route segment that is not a channel run but runs along a channel inside its band is a *fixed run*: a frame entry, such as a role shift running straight along `V_0` (§6.3). A fixed run blocks any track within one `pitch` of it wherever their intervals conflict. It counts toward the channel's tracks, so the gap grows to hold it. A segment whose end leaves on the far side of a fixed run, at the fixed run's coordinate, must take a track beyond it.
+- **Dogleg point.** The split coordinate is the free lattice row (or column) nearest the segment's midpoint. It is at least `2·r_fillet` from both ends. It avoids every exact end in the channel, every segment that crosses the band, and every perpendicular channel's band, where tracks not yet assigned could land. The jog spans at least one `pitch`, more when other segments sit between the two halves. If no row is free, the segment's hard edges are dropped and the channel reports it (`dropped`); no fixture does this.
+- **Feasibility.** A track assignment is feasible when it keeps every hard edge, every fixed-run block and bound, and the `clear` spacing between segments that share a track. Sifting tries only feasible swaps. The §5.2 rule that keeps the previous iteration's assignment applies only when that assignment is still feasible on the new coordinates.
+- **Crossings** are counted exactly between non-sibling polylines (proper crossings of a horizontal and a vertical segment). The committed baseline is `fixtures/layout/baselines/crossings.json` (testing §11).
 
 ---
 

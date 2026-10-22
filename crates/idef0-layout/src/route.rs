@@ -114,6 +114,8 @@ pub struct Leg {
     pub channel: Channel,
     /// Start and end on the channel axis (y for `V`, x for `H`), in route order.
     pub span: (i32, i32),
+    /// The index of the run's segment in the route's path (`path[seg]` to `path[seg + 1]`).
+    pub seg: usize,
 }
 
 /// A routed edge.
@@ -126,9 +128,8 @@ pub struct Route {
     /// The chosen template parameters (channel indices), the frozen channel assignment.
     pub params: Vec<usize>,
     /// The orthogonal polyline in gu, from source to destination, every vertex on the
-    /// lattice. A vertex may be collinear with its neighbors where a fixed segment meets a
-    /// channel run on the channel's center line; track assignment (M4.4) moves the run off
-    /// the center line, and the vertex becomes a bend.
+    /// lattice, with channel runs on their channel's center line. Track assignment
+    /// ([`crate::tracks`]) moves each run onto its track.
     pub path: Vec<(i32, i32)>,
     /// The channel runs, in route order.
     pub legs: Vec<Leg>,
@@ -136,6 +137,9 @@ pub struct Route {
     pub cost: i64,
     /// Whether every candidate broke a §6.3 rejection rule, so the cheapest was taken anyway.
     pub forced: bool,
+    /// The arrow statement a fork branch or join leaf belongs to: routes of one bundle are
+    /// siblings that share a trunk. `None` for a plain arrow or a call.
+    pub bundle: Option<usize>,
 }
 
 /// The global routing of one diagram.
@@ -256,7 +260,7 @@ fn edges(node: &NodeId, diagram: &Diagram, counts: &[PortCounts]) -> Vec<Edge> {
     out
 }
 
-fn snap_down(v: i32, g: i32) -> i32 {
+pub(crate) fn snap_down(v: i32, g: i32) -> i32 {
     v.div_euclid(g) * g
 }
 
@@ -289,10 +293,22 @@ impl Geo<'_> {
     fn port(&self, b: usize, side: Side, k: u8) -> (i32, i32) {
         port_point(self.p.boxes[b], self.counts[b], side, k)
     }
+
+    /// Track 0 of `V_c` (§7.2: `start(V) + clear`).
+    fn v_track0(&self, c: usize) -> i32 {
+        self.p.v_channel(c).0 + self.m.clear
+    }
+
+    /// Track 0 of `H_r`.
+    fn h_track0(&self, r: usize) -> i32 {
+        self.p.h_channel(r).0 + self.m.clear
+    }
 }
 
 /// The "natural" frame coordinate of a boundary end before frame order: the port's coordinate
-/// along the frame edge for a matching side, else the margin channel's center (§6.2 dog-leg).
+/// along the frame edge for a matching side, else track 0 of the margin channel the arrow
+/// turns into (§6.2 dog-leg). Frame order spaces entries one pitch apart, so role-shift
+/// entries land on that margin's track coordinates and run straight along it.
 fn natural_entry(g: &Geo<'_>, frame_side: Side, other: End) -> i32 {
     let n = g.n();
     match other {
@@ -301,9 +317,9 @@ fn natural_entry(g: &Geo<'_>, frame_side: Side, other: End) -> i32 {
             match (frame_side, role) {
                 (Side::I, Side::I) | (Side::O, _) => y,
                 (Side::C, Side::C) | (Side::M, Side::M) => x,
-                (Side::I, Side::C) => g.h(0),
-                (Side::I, _) => g.h(n),
-                (Side::C | Side::M, _) => g.v(0),
+                (Side::I, Side::C) => g.h_track0(0),
+                (Side::I, _) => g.h_track0(n),
+                (Side::C | Side::M, _) => g.v_track0(0),
             }
         }
         _ => 0,
@@ -345,9 +361,15 @@ fn frame_order(g: &mut Geo<'_>, edges: &[Edge]) {
     // Two arrows never enter a frame edge at one point: walking each edge in coordinate
     // order, push every entry at least one track pitch past the previous, then walk back from
     // the far end so none passes the frame corner's clearance. Both walks keep the order, so
-    // the code order above is kept.
+    // the code order above is kept. Entries inside `V_0` on the top and bottom edges run
+    // straight along `V_0` (role shifts), so the bottom edge's start one pitch past the top
+    // edge's: the two never share a track.
     let (fw, fh) = g.p.frame;
-    for (side, list) in on_side {
+    let v0_end = g.p.v_channel(0).1;
+    let mut top_in_v0: Option<i32> = None;
+    let mut sides: Vec<(Side, Vec<usize>)> = on_side.into_iter().collect();
+    sides.sort_by_key(|(side, _)| matches!(side, Side::M));
+    for (side, list) in sides {
         let (step, extent, lattice) = if matches!(side, Side::I | Side::O) {
             (g.m.pitch_y, fh, LATTICE_Y)
         } else {
@@ -360,7 +382,7 @@ fn frame_order(g: &mut Geo<'_>, edges: &[Edge]) {
             .map(|&i| (g.entry.get(&i).copied().unwrap_or(0), i))
             .collect();
         order.sort_unstable();
-        let mut prev: Option<i32> = None;
+        let mut prev: Option<i32> = if side == Side::M { top_in_v0 } else { None };
         for (c, _) in &mut order {
             *c = prev.map_or(*c, |p| (*c).max(p + step)).max(lo);
             prev = Some(*c);
@@ -370,6 +392,9 @@ fn frame_order(g: &mut Geo<'_>, edges: &[Edge]) {
             *c = next.map_or(hi, |n| n - step).min(*c);
             next = Some(*c);
             g.entry.insert(*i, *c);
+            if side == Side::C && *c < v0_end {
+                top_in_v0 = top_in_v0.max(Some(*c));
+            }
         }
     }
 }
@@ -447,7 +472,7 @@ fn candidates(e: &Edge, i: usize, g: &Geo<'_>) -> (Class, Vec<Candidate>) {
                     } else {
                         (a.0, b.0)
                     };
-                    Leg { channel, span }
+                    Leg { channel, span, seg }
                 })
                 .collect();
             out.push(Candidate {
@@ -600,10 +625,13 @@ fn candidates(e: &Edge, i: usize, g: &Geo<'_>) -> (Class, Vec<Candidate>) {
 /// A channel run: its channel and the index of its segment in the path.
 type ChannelSeg = (Channel, usize);
 
-/// A role-shift boundary arrow (§6.2 dog-leg): from the frame entry `at` on side `fs` into
-/// the margin channel beside that edge, along the margin channels (`V_0`, `H_0`, `H_n`) to the
-/// margin channel beside the destination side, then into the port. Valid for any entry that
-/// frame order (FR-LAYOUT-22) assigns, because the margins are free of boxes.
+/// A role-shift boundary arrow (§6.2 dog-leg) from the frame entry `at` on side `fs` into
+/// `port` on side `role`. An entry inside the margin channel it turns into, at least `clear`
+/// from its boxes, (`H_0` for I into
+/// C, `H_n` for I into M, `V_0` for C or M into another role) runs straight along that margin
+/// as a fixed run. Any other entry, wherever frame order (FR-LAYOUT-22) put it, turns into
+/// the margin beside its frame edge and travels the margin channels (`V_0`, `H_0`, `H_n`) to
+/// the one beside the port's side. The margins are free of boxes, so every variant is valid.
 fn role_shift(
     g: &Geo<'_>,
     fs: Side,
@@ -611,61 +639,52 @@ fn role_shift(
     role: Side,
     port: (i32, i32),
 ) -> (Vec<(i32, i32)>, Vec<ChannelSeg>) {
+    use Channel::{H, V};
     let n = g.n();
-    let (fw, fh) = g.p.frame;
+    let fh = g.p.frame.1;
     let (v0, h0, hn) = (g.v(0), g.h(0), g.h(n));
-    let yd = port.1;
-    let xd = port.0;
-    let entry = match fs {
-        Side::I => (0, at),
-        Side::C => (at, 0),
-        Side::M => (at, fh),
-        Side::O => (fw, at),
-    };
-    let first = match fs {
-        Side::I => (v0, at),
-        Side::C => (at, h0),
-        _ => (at, hn),
-    };
-    let mut pts = vec![entry, first];
-    match (matches!(fs, Side::I), role) {
-        (true, Side::C) => pts.extend([(v0, h0), (xd, h0)]),
-        (true, _) => pts.extend([(v0, hn), (xd, hn)]),
-        (false, Side::I) => pts.extend([(v0, first.1), (v0, yd)]),
-        (false, Side::C) => pts.extend([(v0, first.1), (v0, h0), (xd, h0)]),
-        (false, _) => pts.extend([(v0, first.1), (v0, hn), (xd, hn)]),
-    }
-    pts.push(port);
-    pts.dedup();
-    // drop collinear middle points so each segment is one straight run, but keep the point
-    // where the arrow enters the margin channel: the entry stays a short fixed segment and
-    // the margin run stays a channel run, even when the entry lies on the margin line
-    let mut path: Vec<(i32, i32)> = Vec::with_capacity(pts.len());
-    for q in pts {
-        if path.len() >= 3 {
-            let (a, b) = (path[path.len() - 2], path[path.len() - 1]);
-            if (a.0 == b.0 && b.0 == q.0) || (a.1 == b.1 && b.1 == q.1) {
-                path.pop();
-            }
+    let (xd, yd) = port;
+    let clear = g.m.clear;
+    let in_v0 = at + clear <= g.p.v_channel(0).1;
+    match (fs, role) {
+        (Side::I, Side::C) if at + clear <= g.p.h_channel(0).1 => {
+            (vec![(0, at), (xd, at), (xd, yd)], vec![])
         }
-        path.push(q);
+        (Side::I, Side::C) => (
+            vec![(0, at), (v0, at), (v0, h0), (xd, h0), (xd, yd)],
+            vec![(V(0), 1), (H(0), 2)],
+        ),
+        (Side::I, _) if at >= g.p.h_channel(n).0 + clear => {
+            (vec![(0, at), (xd, at), (xd, yd)], vec![])
+        }
+        (Side::I, _) => (
+            vec![(0, at), (v0, at), (v0, hn), (xd, hn), (xd, yd)],
+            vec![(V(0), 1), (H(n), 2)],
+        ),
+        (Side::C, Side::I) if in_v0 => (vec![(at, 0), (at, yd), (xd, yd)], vec![]),
+        (Side::C, Side::I) => (
+            vec![(at, 0), (at, h0), (v0, h0), (v0, yd), (xd, yd)],
+            vec![(H(0), 1), (V(0), 2)],
+        ),
+        (Side::C, _) if in_v0 => (vec![(at, 0), (at, hn), (xd, hn), (xd, yd)], vec![(H(n), 1)]),
+        (Side::C, _) => (
+            vec![(at, 0), (at, h0), (v0, h0), (v0, hn), (xd, hn), (xd, yd)],
+            vec![(H(0), 1), (V(0), 2), (H(n), 3)],
+        ),
+        (_, Side::I) if in_v0 => (vec![(at, fh), (at, yd), (xd, yd)], vec![]),
+        (_, Side::I) => (
+            vec![(at, fh), (at, hn), (v0, hn), (v0, yd), (xd, yd)],
+            vec![(H(n), 1), (V(0), 2)],
+        ),
+        (_, _) if in_v0 => (
+            vec![(at, fh), (at, h0), (xd, h0), (xd, yd)],
+            vec![(H(0), 1)],
+        ),
+        (_, _) => (
+            vec![(at, fh), (at, hn), (v0, hn), (v0, h0), (xd, h0), (xd, yd)],
+            vec![(H(n), 1), (V(0), 2), (H(0), 3)],
+        ),
     }
-    let last = path.len().saturating_sub(2);
-    let legs = (1..last)
-        .filter_map(|seg| {
-            let (a, b) = (path[seg], path[seg + 1]);
-            if a.0 == b.0 && a.0 == v0 {
-                Some((Channel::V(0), seg))
-            } else if a.1 == b.1 && a.1 == h0 {
-                Some((Channel::H(0), seg))
-            } else if a.1 == b.1 && a.1 == hn {
-                Some((Channel::H(n), seg))
-            } else {
-                None
-            }
-        })
-        .collect();
-    (path, legs)
 }
 
 fn bends(p: &[(i32, i32)]) -> usize {
@@ -686,7 +705,7 @@ fn length(p: &[(i32, i32)]) -> i64 {
 type Seg = ((i32, i32), (i32, i32));
 
 /// Proper crossings between two polylines' orthogonal segments.
-fn crossings(a: &[(i32, i32)], b: &[(i32, i32)]) -> usize {
+pub(crate) fn crossings(a: &[(i32, i32)], b: &[(i32, i32)]) -> usize {
     let mut n = 0;
     for s in a.windows(2) {
         for t in b.windows(2) {
@@ -769,23 +788,12 @@ fn inside(x0: i32, x1: i32, y0: i32, y1: i32, r: crate::ports::Rect) -> bool {
 }
 
 fn concrete_segments(r: &Route) -> Vec<Seg> {
-    let channel: Vec<Seg> = r.legs.iter().map(|l| leg_seg(r, l)).collect();
     r.path
         .windows(2)
-        .map(|w| (w[0], w[1]))
-        .filter(|s| !channel.contains(s))
+        .enumerate()
+        .filter(|(s, _)| !r.legs.iter().any(|l| l.seg == *s))
+        .map(|(_, w)| (w[0], w[1]))
         .collect()
-}
-
-fn leg_seg(r: &Route, l: &Leg) -> Seg {
-    r.path
-        .windows(2)
-        .map(|w| (w[0], w[1]))
-        .find(|(a, b)| match l.channel {
-            Channel::V(_) => a.0 == b.0 && (a.1, b.1) == l.span,
-            Channel::H(_) => a.1 == b.1 && (a.0, b.0) == l.span,
-        })
-        .unwrap_or(((0, 0), (0, 0)))
 }
 
 fn collinear_overlap(a: Seg, b: Seg) -> bool {
@@ -890,16 +898,7 @@ fn cost_of(cand: &Candidate, k: usize, ctx: &Ctx<'_>, chosen: &[Option<Route>]) 
         .filter_map(|(j, r)| r.as_ref().map(|r| (j, r)))
         .collect();
     let e = &ctx.edges[k];
-    let channel_segs: Vec<usize> = cand
-        .legs
-        .iter()
-        .filter_map(|l| {
-            cand.path.windows(2).position(|w| match l.channel {
-                Channel::V(_) => w[0].0 == w[1].0 && (w[0].1, w[1].1) == l.span,
-                Channel::H(_) => w[0].1 == w[1].1 && (w[0].0, w[1].0) == l.span,
-            })
-        })
-        .collect();
+    let channel_segs: Vec<usize> = cand.legs.iter().map(|l| l.seg).collect();
     let bad = rejected(
         &cand.path,
         &channel_segs,
@@ -963,6 +962,7 @@ fn choose(
             legs: cand.legs.clone(),
             cost,
             forced,
+            bundle: ctx.edges[k].bundle,
         }
     })
 }
@@ -1031,21 +1031,33 @@ pub fn reroute(
     }
 }
 
-/// Placement and global routing of diagram `node` together (§5.2): iteration 1 routes from
-/// scratch; later iterations keep its channel assignment and only recompute geometry. Each
-/// channel is given as many tracks as its runs overlap (track assignment, M4.4, refines this).
+/// Placement, global routing and track assignment of one diagram (§5.2, §6, §7).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Routed {
+    /// The placement iteration's result.
+    pub placed: crate::place::Placed,
+    /// Global routing on the final placement: channel runs on center lines.
+    pub routing: Routing,
+    /// Track assignment on the final placement: the final polylines.
+    pub wiring: crate::tracks::Wiring,
+}
+
+/// Placement, global routing and track assignment of diagram `node` together (§5.2).
+/// Iteration 1 routes from scratch; later iterations keep its channel assignment and only
+/// recompute geometry. Each iteration assigns tracks, and each channel's track count sizes its
+/// gap; a channel keeps its previous assignment when a new one would need more tracks.
 pub fn layout_routes(
     model: &idef0_core::model::Model,
     node: &NodeId,
     shadows: bool,
     metric: crate::text::TextMetric,
     m: &Metrics,
-) -> Option<(crate::place::Placed, Routing)> {
+) -> Option<Routed> {
     let diagram = model.diagrams.get(node)?;
     let plans = crate::place::box_plans(model, node, shadows, metric, m);
     let counts = crate::place::port_counts(diagram);
-    let n = plans.len();
     let mut frozen: Option<Routing> = None;
+    let mut wired: Option<crate::tracks::Wiring> = None;
     let mut passes = 0;
     let placed =
         crate::place::iterate(&plans, crate::place::EdgeAllowance::default(), m, |p, _| {
@@ -1056,14 +1068,21 @@ pub fn layout_routes(
                 passes = r.passes;
                 r
             };
-            let tracks = r.density(n);
+            let w = crate::tracks::assign(&r, p, m, wired.as_ref());
+            let tracks = w.tracks.clone();
             frozen = Some(r);
+            wired = Some(w);
             tracks
         });
     // the final placement may postdate the last route (overflow): recompute its geometry
     let last = frozen.unwrap_or_else(|| route(node, diagram, &placed.placement, &counts, m));
     let routing = reroute(&last, node, diagram, &placed.placement, &counts, m);
-    Some((placed, Routing { passes, ..routing }))
+    let wiring = crate::tracks::assign(&routing, &placed.placement, m, wired.as_ref());
+    Some(Routed {
+        placed,
+        routing: Routing { passes, ..routing },
+        wiring,
+    })
 }
 
 #[cfg(test)]
@@ -1086,7 +1105,9 @@ mod tests {
     fn with_ctx<R>(model: &Model, f: impl FnOnce(&mut Ctx<'_>) -> R) -> R {
         let m = Metrics::default();
         let node = NodeId::a0();
-        let (placed, _) = layout_routes(model, &node, true, TextMetric::Mono, &m).expect("A0");
+        let placed = layout_routes(model, &node, true, TextMetric::Mono, &m)
+            .expect("A0")
+            .placed;
         let diagram = &model.diagrams[&node];
         let counts = crate::place::port_counts(diagram);
         let mut ctx = context(&node, diagram, &placed.placement, &counts, &m);
@@ -1109,6 +1130,7 @@ mod tests {
             legs,
             cost: 0,
             forced: false,
+            bundle: None,
         }
     }
 
@@ -1194,6 +1216,7 @@ mod tests {
                 vec![Leg {
                     channel: Channel::H(0),
                     span: (x, x + 40),
+                    seg: 0,
                 }],
             );
             let mine = [(x + 10, h0), (x + 30, h0)];
@@ -1220,6 +1243,7 @@ mod tests {
                 legs: vec![Leg {
                     channel: Channel::H(0),
                     span: (x, x + 40),
+                    seg: 0,
                 }],
                 deviation: 0,
             };
@@ -1249,6 +1273,7 @@ mod tests {
                     vec![Leg {
                         channel: Channel::H(0),
                         span: (x + 40, x),
+                        seg: 0,
                     }],
                 )
             };
@@ -1332,7 +1357,9 @@ mod tests {
             let single: i64 = chosen.iter().flatten().map(|r| r.cost).sum();
             let m = Metrics::default();
             let node = NodeId::a0();
-            let (placed, _) = layout_routes(&model, &node, true, TextMetric::Mono, &m).expect("A0");
+            let placed = layout_routes(&model, &node, true, TextMetric::Mono, &m)
+                .expect("A0")
+                .placed;
             let diagram = &model.diagrams[&node];
             let counts = crate::place::port_counts(diagram);
             let r = route(&node, diagram, &placed.placement, &counts, &m);
