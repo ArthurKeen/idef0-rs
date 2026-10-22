@@ -554,6 +554,29 @@ Editing happens only through **Commands**. Each command is applied by core as a 
 - **Persistence:** saving does not clear the stack. Default depth is 500, configurable.
 - **Elsewhere:** rebase after `409`, external reloads, and the rule never to overwrite a file that fails to parse are in [architecture §state](../architecture.md#6-persistence-and-concurrency). Rebase replays stored Commands, not Patches.
 
+### 13.7 Implementation notes (M1.5)
+
+These are idef0-rs implementation choices, not FIPS rules.
+
+- **Commands in v1 core.** These commands exist (`idef0_core::command`):
+  - box commands: `AddBox`, `RenameBox`, `MoveBox`, `DeleteBox`, `DeleteDiagram`;
+  - arrow and port commands: `AddArrow` (plain), `DeleteArrow`, `Retarget`, `ReorderPorts`;
+  - text and status: `SetDescription`, `SetStatus`;
+  - copy and paste: `Paste`, with `copy` producing the clip.
+
+  `Decompose`, `SetCall` and `ClearCall` arrive with M1.6. `Fork`, `Join`, `SetLabel`, `SetRel`, `SetTunnel`, `SetMeta`, the concept commands (§13.3) and the note commands (FR-EDIT-16) arrive with the editor wiring epic (M6.2), which is the first to issue them.
+- **Op granularity.** An op replaces one diagram, one concept, or the metadata. The inverse holds the previous value, so undo restores the input exactly.
+- **RenameMap derivation.** The map is derived, not written by each command:
+  - node renames follow box keys (each box key's node before and after);
+  - arrow-id renames follow the statement each arrow came from;
+  - port renames follow the ends of surviving arrows.
+  
+  When the parent's port vanishes but the child keeps the code as a border tunnel, the port maps to that tunnel (`A3/I1 → A2/[I1]`) and not to `∅`. A compound change (`apply_all`) composes the maps, so each original identifier maps to its final one.
+- **Validity.** A command whose result has more `E-*` findings than its input is rejected (`CommandError::Invalid`) and nothing changes.
+- **`ReorderPorts` input.** The command takes the side's old ranks in their new order. Shift+↑/↓ and Auto-Arrange both express their permutation that way.
+- **Box commands.** They act on decomposition diagrams. A box on A-0 or A-n can be renamed and described, and its ports reordered; adding, moving and deleting there are rejected. `RenameBox` renames every occurrence of the key, since the A-1 lineage box shares the A-0 box's key, and updates a stated child title equal to the old name (FR-DIAG-05).
+- **Deleted keys.** A box key that a patch removes is added to the retired set (D17).
+
 ---
 
 ## 14. Persistence and workspace (FR-WS)
