@@ -17,7 +17,7 @@ use idef0_core::id::NodeId;
 use idef0_core::model::Model;
 use idef0_layout::metrics::Metrics;
 use idef0_layout::place::{EdgeAllowance, Gaps, Tracks, box_plans, place};
-use idef0_layout::route::{Routing, layout_routes};
+use idef0_layout::route::{Routed, layout_routes};
 use idef0_layout::spike::{arrange_box_order, diagram};
 use idef0_layout::text::TextMetric;
 
@@ -29,11 +29,9 @@ fn model(src: &str) -> Model {
     parse(src).model.expect("fixture parses")
 }
 
-fn layout(m: &Model) -> Routing {
+fn layout(m: &Model) -> Routed {
     let metrics = Metrics::default();
-    layout_routes(m, &NodeId::a0(), true, TextMetric::Mono, &metrics)
-        .expect("A0")
-        .1
+    layout_routes(m, &NodeId::a0(), true, TextMetric::Mono, &metrics).expect("A0")
 }
 
 fn run(op: &str, dense: &Model, worst: &Model, dogfood: &Model) {
@@ -64,30 +62,26 @@ fn run(op: &str, dense: &Model, worst: &Model, dogfood: &Model) {
     }
 }
 
-/// Bends in a route: vertices where the direction turns.
-fn bends(r: &Routing) -> usize {
-    r.routes
+/// Bends in the wired polylines: vertices where the direction turns.
+fn bends(r: &Routed) -> usize {
+    r.wiring
+        .paths
         .iter()
-        .map(|x| {
-            x.path
-                .windows(3)
-                .filter(|w| {
-                    !((w[0].0 == w[1].0 && w[1].0 == w[2].0)
-                        || (w[0].1 == w[1].1 && w[1].1 == w[2].1))
-                })
-                .count()
-        })
+        .map(|p| p.len().saturating_sub(2))
         .sum()
 }
 
-fn facts(name: &str, r: &Routing) {
-    let forced = r.routes.iter().filter(|x| x.forced).count();
+fn facts(name: &str, r: &Routed) {
+    let forced = r.routing.routes.iter().filter(|x| x.forced).count();
+    let doglegs: usize = r.wiring.channels.iter().map(|c| c.doglegs.len()).sum();
+    let tracks: u32 = r.wiring.channels.iter().map(|c| c.tracks).sum();
     println!(
-        "{name}: routed={} forced={forced} bends={} cost={} passes={}",
-        r.routes.len(),
+        "{name}: routed={} forced={forced} bends={} crossings={} tracks={tracks} doglegs={doglegs} iterations={} passes={}",
+        r.routing.routes.len(),
         bends(r),
-        r.total_cost,
-        r.passes
+        r.wiring.crossings,
+        r.placed.iterations,
+        r.routing.passes
     );
 }
 

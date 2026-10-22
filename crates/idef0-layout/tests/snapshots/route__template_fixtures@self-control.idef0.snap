@@ -1,6 +1,8 @@
 ---
 source: crates/idef0-layout/tests/route.rs
-expression: listing(&r)
+expression: "format!(\"{}\\n{}\\ntracks {} crossings {}\", listing(r), wired.join(\"\\n\"),\nused.join(\" \"), x.wiring.crossings)"
 input_file: fixtures/layout/templates/self-control.idef0
 ---
 probe SelfControl params=[1] cost=360 path=(118,76) (124,76) (124,56) (98,56) (98,64)
+probe wired=(118,76) (122,76) (122,52) (98,52) (98,64)
+tracks V(2)=1 H(1)=1 crossings 0

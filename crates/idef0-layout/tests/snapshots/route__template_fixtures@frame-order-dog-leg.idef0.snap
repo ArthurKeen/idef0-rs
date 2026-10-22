@@ -1,7 +1,10 @@
 ---
 source: crates/idef0-layout/tests/route.rs
-expression: listing(&r)
+expression: "format!(\"{}\\n{}\\ntracks {} crossings {}\", listing(r), wired.join(\"\\n\"),\nused.join(\" \"), x.wiring.crossings)"
 input_file: fixtures/layout/templates/frame-order-dog-leg.idef0
 ---
-probe BoundaryDogLeg params=[0] cost=412 path=(0,36) (12,36) (12,116) (132,116)
-A0:I2->1I1#0 BoundaryDogLeg params=[0] cost=304 path=(0,116) (12,116) (12,36) (24,36)
+probe BoundaryDogLeg params=[0] cost=414 path=(0,36) (12,36) (12,116) (134,116)
+A0:I2->1I1#0 BoundaryDogLeg params=[0] cost=306 path=(0,116) (12,116) (12,36) (26,36)
+probe wired=(0,36) (10,36) (10,116) (134,116)
+A0:I2->1I1#0 wired=(0,116) (4,116) (4,76) (16,76) (16,36) (26,36)
+tracks V(0)=3 crossings 1

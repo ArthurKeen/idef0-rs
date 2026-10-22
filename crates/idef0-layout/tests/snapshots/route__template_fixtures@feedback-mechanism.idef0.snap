@@ -1,6 +1,8 @@
 ---
 source: crates/idef0-layout/tests/route.rs
-expression: listing(&r)
+expression: "format!(\"{}\\n{}\\ntracks {} crossings {}\", listing(r), wired.join(\"\\n\"),\nused.join(\" \"), x.wiring.crossings)"
 input_file: fixtures/layout/templates/feedback-mechanism.idef0
 ---
 probe FeedbackMechanism params=[3] cost=568 path=(172,116) (184,116) (184,140) (44,140) (44,48)
+probe wired=(172,116) (176,116) (176,132) (44,132) (44,48)
+tracks V(3)=1 H(3)=1 crossings 0

@@ -1,6 +1,8 @@
 ---
 source: crates/idef0-layout/tests/route.rs
-expression: listing(&r)
+expression: "format!(\"{}\\n{}\\ntracks {} crossings {}\", listing(r), wired.join(\"\\n\"),\nused.join(\" \"), x.wiring.crossings)"
 input_file: fixtures/layout/templates/forward-control.idef0
 ---
 probe ForwardControl params=[] cost=256 path=(64,36) (152,36) (152,104)
+probe wired=(64,36) (152,36) (152,104)
+tracks  crossings 0

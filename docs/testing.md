@@ -234,7 +234,8 @@ Untrusted bytes reach several parsers (model files from PRs, PRD Markdown, code 
 | `fixtures/workspace/` | Multi-model workspace (`ORD`, `SEC`) for cross-model calls, Used At and workspace index | M1.6 |
 | `fixtures/generated/seed-<n>.idef0` | 32 committed generator outputs for goldens and cross-target tests | M1.7 (generator) |
 | `fixtures/large/large-60.idef0` | 60-diagram generated model (seed `0x1DEF0`, ~2k elements, 1k concepts) for budgets | M1.7 (generator) |
-| `fixtures/bench/*.idef0` | Benchmark diagrams per routing template class | M4.3 |
+| `fixtures/bench/*.idef0` | Benchmark diagrams for layout budgets and crossings (dense 7×40, Auto-Arrange worst case) | M4.0 |
+| `fixtures/layout/templates/*.idef0` | One diagram per routing template class, with a `key=probe` arrow; snapshots of routes, wired polylines and tracks | M4.3, M4.4 |
 | `fixtures/layout/baselines/crossings.json` | Committed crossing counts per benchmark diagram | M4.4 |
 | `fixtures/arrange/*.idef0` | Deliberately mis-ordered diagrams with known optimum | M4.7 |
 | `fixtures/fsm/*.keys` (+ expected `.idef0`) | Key-sequence scenarios (§10.2) | M6.2 |

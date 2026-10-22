@@ -1,6 +1,8 @@
 ---
 source: crates/idef0-layout/tests/route.rs
-expression: listing(&r)
+expression: "format!(\"{}\\n{}\\ntracks {} crossings {}\", listing(r), wired.join(\"\\n\"),\nused.join(\" \"), x.wiring.crossings)"
 input_file: fixtures/layout/templates/forward-mechanism.idef0
 ---
 probe ForwardMechanism params=[2] cost=504 path=(64,36) (124,36) (124,140) (152,140) (152,128)
+probe wired=(64,36) (122,36) (122,132) (152,132) (152,128)
+tracks V(2)=1 H(3)=1 crossings 0

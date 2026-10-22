@@ -1,6 +1,8 @@
 ---
 source: crates/idef0-layout/tests/route.rs
-expression: listing(&r)
+expression: "format!(\"{}\\n{}\\ntracks {} crossings {}\", listing(r), wired.join(\"\\n\"),\nused.join(\" \"), x.wiring.crossings)"
 input_file: fixtures/layout/templates/output-exit.idef0
 ---
 probe OutputExit params=[] cost=132 path=(64,36) (196,36)
+probe wired=(64,36) (196,36)
+tracks  crossings 0
