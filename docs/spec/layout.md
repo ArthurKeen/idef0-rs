@@ -646,6 +646,7 @@ pub fn check(scene: &Scene) -> Vec<Diagnostic>;   // G-* (§15)
 - `layout` returns `Result<LayoutResult, LayoutError>`. The error cases are "the model has no such diagram" and "the theme is not available yet": `classic` waits for its Serif metrics (M5.5).
 - `LayoutInput` carries the theme and the metrics. `hints` arrive with Auto-Arrange (M4.7) and `page` with Fit to page (§5.3).
 - The Scene has the page size, the frame, the form, the boxes (title, corner label, shadow, DRE) and the arrows. Each arrow has a polyline and a filled arrowhead at its destination; arrow ids include call arrows (`call @key`). Fillets come with M5.1, bundles with M5.2, bumps with M5.3, and labels, squiggles, ICOM codes, tunnel glyphs and notes with M5.4.
+- USED AT lists the callers of the diagram's boxes within the model (FR-CALL-04). Callers in other models appear once workspace rendering passes the index (M2.4).
 - The form has fixed band heights: the working band is 5 rows of `line_h` and the identification band 2. Its column widths are fixed fractions of the frame width, and text that does not fit its cell is cut with an ellipsis. The CONTEXT sketch uses the scale 1/8, or a smaller power of two when that does not fit.
 - SVG text mode `ref` (`font-family: monospace`) is the only mode until the bundled fonts arrive (M5.5).
 

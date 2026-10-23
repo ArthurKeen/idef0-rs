@@ -59,6 +59,26 @@ impl Model {
             .contains_key(node)
             .then(|| Dre::NodeNumber(NodeRef::new(None, node.clone(), None)))
     }
+
+    /// The node each box key details: the box at index `i` of decomposition diagram `D` is
+    /// `D.child(i + 1)`, and the A-0 box is A0. Boxes on higher-context diagrams have no node
+    /// (FR-DIAG-12): the A-1 lineage box shares the A-0 box's key and node.
+    pub fn box_nodes(&self) -> BTreeMap<BoxKey, NodeId> {
+        let mut out = BTreeMap::new();
+        for (node, d) in &self.diagrams {
+            for (i, b) in d.boxes.iter().enumerate() {
+                let n = match node {
+                    NodeId::Context { level: 0 } => Some(NodeId::a0()),
+                    NodeId::Context { .. } => None,
+                    NodeId::Node(_) => u8::try_from(i + 1).ok().and_then(|k| node.child(k)),
+                };
+                if let Some(n) = n {
+                    out.entry(b.key.clone()).or_insert(n);
+                }
+            }
+        }
+        out
+    }
 }
 
 /// Model metadata (metamodel §2, FR-META-01..05).

@@ -763,3 +763,179 @@ fn redo_clears_and_navigates() {
     assert_eq!(h.redo_len(), 0, "a new change clears redo");
     let _ = m2;
 }
+
+fn call(targets: &[&str], note: Option<u32>) -> crate::model::CallArrow {
+    let t: Vec<crate::model::KeyRef<BoxKey>> =
+        targets.iter().map(|s| s.parse().expect("target")).collect();
+    crate::model::CallArrow {
+        targets: NonEmpty::from_vec(t).expect("targets"),
+        note,
+        map: Vec::new(),
+    }
+}
+
+// FR-EDIT-09: Decompose gives a leaf an empty child (working, derived title); its parent's
+// ICOMs are the child's stubs (FR-BAL-01); the DRE appearing is a minor change.
+#[test]
+fn decompose_a_leaf() {
+    let mut m = five();
+    Arc::make_mut(m.diagrams.get_mut(&n("A0")).expect("A0")).status = Status::Recommended;
+    let (after, p) = run(&m, Command::Decompose { key: k("step-one") });
+    check_inverse(&m, &after, &p);
+    let child = &after.diagrams[&n("A1")];
+    assert!(child.boxes.is_empty() && child.arrows.is_empty() && child.title.is_none());
+    assert_eq!(child.status, Status::Working);
+    assert_eq!(after.diagrams[&n("A0")].status, Status::Draft, "minor");
+    let stubs: Vec<String> = crate::balance::stubs(&after, &n("A1"))
+        .expect("stubs")
+        .iter()
+        .map(|p| format!("{}{}", p.side.letter(), p.code.number()))
+        .collect();
+    assert_eq!(stubs, ["I1", "O1", "O2"]);
+    assert_eq!(
+        crate::balance::stubs(&after, &n("A3")).expect("stubs"),
+        vec![],
+        "A3 is wired"
+    );
+    assert!(matches!(
+        try_run(
+            &m,
+            Command::Decompose {
+                key: k("step-three")
+            }
+        ),
+        Err(CommandError::Rejected(_))
+    ));
+    assert!(
+        matches!(
+            try_run(&m, Command::Decompose { key: k("run-five") }),
+            Err(CommandError::Rejected(_))
+        ),
+        "A0 exists"
+    );
+}
+
+// FR-CALL-01, -02, -09, -13 through SetCall and ClearCall (FR-EDIT-18).
+#[test]
+fn set_and_clear_calls() {
+    let m = five();
+    // FR-CALL-13: a callable box is on a decomposition diagram; the own top box is not
+    assert!(matches!(
+        try_run(
+            &m,
+            Command::SetCall {
+                key: k("step-five"),
+                call: call(&["@run-five"], None)
+            }
+        ),
+        Err(CommandError::Rejected(_))
+    ));
+    assert!(matches!(
+        try_run(
+            &m,
+            Command::SetCall {
+                key: k("step-five"),
+                call: call(&["@no-such-box"], None)
+            }
+        ),
+        Err(CommandError::Rejected(_))
+    ));
+    // FR-CALL-02: a decomposed box cannot call, the top box cannot call, a caller cannot
+    // be decomposed
+    assert!(matches!(
+        try_run(
+            &m,
+            Command::SetCall {
+                key: k("step-three"),
+                call: call(&["@sub-two"], None)
+            }
+        ),
+        Err(CommandError::Rejected(_))
+    ));
+    assert!(matches!(
+        try_run(
+            &m,
+            Command::SetCall {
+                key: k("run-five"),
+                call: call(&["@sub-two"], None)
+            }
+        ),
+        Err(CommandError::Rejected(_))
+    ));
+    let (caller, p) = run(
+        &m,
+        Command::SetCall {
+            key: k("step-five"),
+            call: call(&["@sub-two"], None),
+        },
+    );
+    check_inverse(&m, &caller, &p);
+    // FR-CALL-09: the call is not an ICOM: no port, rank or id changes
+    assert!(p.rename.ports.is_empty() && p.rename.arrows.is_empty());
+    assert_eq!(arrows(&caller, "A0"), arrows(&m, "A0"));
+    assert!(matches!(
+        try_run(
+            &caller,
+            Command::Decompose {
+                key: k("step-five")
+            }
+        ),
+        Err(CommandError::Rejected(_))
+    ));
+    assert!(caller.dre(&n("A5")).is_none(), "a caller has no DRE");
+    // FR-CALL-01: one call arrow; a new SetCall replaces it; cross-model targets are stored
+    let (alt, _) = run(
+        &caller,
+        Command::SetCall {
+            key: k("step-five"),
+            call: call(&["@sub-three", "SEC/@pack"], None),
+        },
+    );
+    let c = alt.diagrams[&n("A0")].boxes[4].call.as_ref().expect("call");
+    assert_eq!(c.targets.len(), 2);
+    let (cleared, p) = run(
+        &alt,
+        Command::ClearCall {
+            key: k("step-five"),
+        },
+    );
+    check_inverse(&alt, &cleared, &p);
+    assert!(cleared.diagrams[&n("A0")].boxes[4].call.is_none());
+    assert!(matches!(
+        try_run(
+            &cleared,
+            Command::ClearCall {
+                key: k("step-five")
+            }
+        ),
+        Err(CommandError::Rejected(_))
+    ));
+}
+
+// FR-EDIT-18: the top box is rejected as a caller even before A0 exists.
+#[test]
+fn top_box_never_calls() {
+    let src = "idef0 0.2\nmodel \"T\" {\n  abbrev \"TOP\"\n}\ndiagram A-0 \"Run\" {\n  box 0 \"Run\"\n}\n";
+    let m = model(src);
+    let r = try_run(
+        &m,
+        Command::SetCall {
+            key: k("run"),
+            call: call(&["OTHER/@x"], None),
+        },
+    );
+    assert!(matches!(r, Err(CommandError::Rejected(_))), "{r:?}");
+}
+
+// FR-BAL-01: an arrow tunneled at the parent box is hidden on the child: no stub.
+#[test]
+fn tunneled_ports_have_no_stub() {
+    let m = model(&FIVE.replace("  arrow : I1 -> 1I1\n", "  arrow : I1 -> 1I1 tunnel=box\n"));
+    let (after, _) = run(&m, Command::Decompose { key: k("step-one") });
+    let stubs: Vec<String> = crate::balance::stubs(&after, &n("A1"))
+        .expect("stubs")
+        .iter()
+        .map(|p| format!("{}{}", p.side.letter(), p.code.number()))
+        .collect();
+    assert_eq!(stubs, ["O1", "O2"]);
+}

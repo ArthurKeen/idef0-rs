@@ -20,7 +20,7 @@ use crate::diag::Diagnostic;
 use crate::id::{NodeId, PortCode, PortRef, Side};
 use crate::identity::{ArrowId, KeyMinter, arrow_ids};
 use crate::model::{
-    Arrow, ArrowAttrs, ArrowShape, BoundaryPort, Concept, ConceptRef, Diagram, Endpoint,
+    Arrow, ArrowAttrs, ArrowShape, BoundaryPort, CallArrow, Concept, ConceptRef, Diagram, Endpoint,
     FunctionBox, Meta, Model, NoteTarget, Status,
 };
 use crate::text::{BoxKey, ConceptKey, Description, NonEmptyString};
@@ -162,6 +162,25 @@ pub enum Command {
         diagram: NodeId,
         /// The status.
         status: Status,
+    },
+    /// Give a box its child diagram, empty: status `working`, title derived from the box
+    /// (FR-EDIT-09). The parent's ICOMs show as stubs on it ([`crate::balance::stubs`]).
+    Decompose {
+        /// The box.
+        key: BoxKey,
+    },
+    /// Make a box a caller, replacing any call it had: a box has at most one call arrow
+    /// (FR-EDIT-18, FR-CALL-01).
+    SetCall {
+        /// The caller.
+        key: BoxKey,
+        /// The call arrow.
+        call: CallArrow,
+    },
+    /// Remove a box's call arrow.
+    ClearCall {
+        /// The caller.
+        key: BoxKey,
     },
     /// Paste a copied box at position `at` with fresh keys (FR-EDIT-13).
     Paste {
@@ -401,6 +420,9 @@ fn primary_of(model: &Model, cmd: &Command) -> NodeId {
         Command::RenameBox { key, .. }
         | Command::MoveBox { key, .. }
         | Command::DeleteBox { key }
+        | Command::Decompose { key }
+        | Command::SetCall { key, .. }
+        | Command::ClearCall { key }
         | Command::ReorderPorts { key, .. } => of_key(key),
     }
 }
@@ -530,7 +552,76 @@ fn run(d: &mut Draft<'_>, cmd: &Command, env: &mut Env<'_>) -> Result<(), Comman
             Ok(())
         }
         Command::Paste { diagram, at, clip } => paste(d, diagram, *at, clip, env),
+        Command::Decompose { key } => decompose(d, key),
+        Command::SetCall { key, call } => set_call(d, key, call),
+        Command::ClearCall { key } => {
+            let (node, i) = locate(&d.model, key)?;
+            if d.diagram(&node)?.boxes[i].call.is_none() {
+                return reject(format!("@{key} is not a caller"));
+            }
+            let (dg, _) = d.edit(&node)?;
+            dg.boxes[i].call = None;
+            d.mark(&node, Change::Major);
+            Ok(())
+        }
     }
+}
+
+/// FR-EDIT-09: an empty child for a leaf that is neither a caller nor an environment box.
+fn decompose(d: &mut Draft<'_>, key: &BoxKey) -> Result<(), CommandError> {
+    let (node, i) = locate(&d.model, key)?;
+    let Some(child) = detail_node(&node, i) else {
+        return reject(format!(
+            "@{key} is an environment box: it cannot be decomposed (FR-DIAG-12)"
+        ));
+    };
+    if d.model.diagrams.contains_key(&child) {
+        return reject(format!("@{key} is already decomposed by {child}"));
+    }
+    if d.diagram(&node)?.boxes[i].call.is_some() {
+        return reject(format!(
+            "@{key} is a caller: it is detailed by its callee (FR-CALL-02)"
+        ));
+    }
+    d.insert(child, Diagram::default());
+    // the DRE appears: a minor change on the parent (§13.5)
+    d.mark(&node, Change::Minor);
+    Ok(())
+}
+
+/// FR-EDIT-18: not on a decomposed box, the top box or an environment box; local targets
+/// must be callable boxes of this model (FR-CALL-13).
+fn set_call(d: &mut Draft<'_>, key: &BoxKey, call: &CallArrow) -> Result<(), CommandError> {
+    let (node, i) = locate(&d.model, key)?;
+    match detail_node(&node, i) {
+        None => {
+            return reject(format!(
+                "@{key} is an environment box: it cannot call (FR-DIAG-12)"
+            ));
+        }
+        Some(n) if n == NodeId::a0() => {
+            return reject("the top box cannot be a caller: A0 must be decomposed (E-CALL-02)");
+        }
+        Some(n) if d.model.diagrams.contains_key(&n) => {
+            return reject(format!(
+                "@{key} is decomposed by {n}: a caller has no child (FR-CALL-02)"
+            ));
+        }
+        Some(_) => {}
+    }
+    let scope = crate::calls::Scope::alone(&d.model);
+    for t in &call.targets {
+        let local = t.model.as_ref().is_none_or(|m| *m == d.model.meta.abbrev);
+        if local && scope.resolve(t).is_none() {
+            return reject(format!(
+                "{t} is not a callable box of this model (FR-CALL-13)"
+            ));
+        }
+    }
+    let (dg, _) = d.edit(&node)?;
+    dg.boxes[i].call = Some(call.clone());
+    d.mark(&node, Change::Major);
+    Ok(())
 }
 
 fn mint(d: &Draft<'_>, env: &mut Env<'_>, name: &str) -> BoxKey {
