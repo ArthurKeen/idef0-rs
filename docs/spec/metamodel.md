@@ -314,7 +314,7 @@ CallPortMap = ⟨caller: (Role, k), callee: (Role, k)⟩     # [Extension]
 | FR-CALL-13 | Callable boxes: boxes on decomposition diagrams, including another model's A0 top box. The A0 top box of the calling model cannot be a caller (`E-CALL-02`). | §3.3.4.2 (A0 must be decomposed) |
 
 **Display label (FR-CALL-03).** The label is the node reference of the diagram that contains the called box, plus the called box number (§3.3.2.10):
-- `A5.2` for box A52 in the same model, `SEC/A2.1` for box A21 of model SEC.
+- `A5.2` for box A52 in the same model, `SEC/A2.1` for box A21 of model SEC. A box on A0 shows its own node (`A5`), the dotted form of `A0.5` (§3.6).
 - An alternatives list reads `SEC/A2.1 | SEC/A2.3`, plus the note glyph.
 - Theme option `call_label = fips | node`; `node` shows `SEC/A21` instead.
 - Renumbering the callee changes the displayed label, never the stored target.
@@ -562,9 +562,10 @@ These are idef0-rs implementation choices, not FIPS rules.
   - box commands: `AddBox`, `RenameBox`, `MoveBox`, `DeleteBox`, `DeleteDiagram`;
   - arrow and port commands: `AddArrow` (plain), `DeleteArrow`, `Retarget`, `ReorderPorts`;
   - text and status: `SetDescription`, `SetStatus`;
-  - copy and paste: `Paste`, with `copy` producing the clip.
+  - copy and paste: `Paste`, with `copy` producing the clip;
+  - decomposition and calls (M1.6): `Decompose`, `SetCall`, `ClearCall`.
 
-  `Decompose`, `SetCall` and `ClearCall` arrive with M1.6. `Fork`, `Join`, `SetLabel`, `SetRel`, `SetTunnel`, `SetMeta`, the concept commands (§13.3) and the note commands (FR-EDIT-16) arrive with the editor wiring epic (M6.2), which is the first to issue them.
+  `Fork`, `Join`, `SetLabel`, `SetRel`, `SetTunnel`, `SetMeta`, the concept commands (§13.3) and the note commands (FR-EDIT-16) arrive with the editor wiring epic (M6.2), which is the first to issue them.
 - **Op granularity.** An op replaces one diagram, one concept, or the metadata. The inverse holds the previous value, so undo restores the input exactly.
 - **RenameMap derivation.** The map is derived, not written by each command:
   - node renames follow box keys (each box key's node before and after);
@@ -576,6 +577,12 @@ These are idef0-rs implementation choices, not FIPS rules.
 - **`ReorderPorts` input.** The command takes the side's old ranks in their new order. Shift+↑/↓ and Auto-Arrange both express their permutation that way.
 - **Box commands.** They act on decomposition diagrams. A box on A-0 or A-n can be renamed and described, and its ports reordered; adding, moving and deleting there are rejected. `RenameBox` renames every occurrence of the key, since the A-1 lineage box shares the A-0 box's key, and updates a stated child title equal to the old name (FR-DIAG-05).
 - **Deleted keys.** A box key that a patch removes is added to the retired set (D17).
+- **Calls (M1.6).**
+  - `SetCall` replaces any call the box had (FR-CALL-01).
+  - It is rejected on a decomposed box, on the top box and on an environment box. Every target in the calling model must be a callable box (FR-CALL-13). Other models' targets are stored unchecked, and resolve through the workspace index.
+  - `Decompose` is rejected on a caller, an environment box or a decomposed box.
+  - Call labels (FR-CALL-03), target resolution (FR-CALL-07) and the Used At index (FR-CALL-04) are `idef0_core::calls`. The parent ICOMs a child does not wire yet (the editor's stubs, §11) are `idef0_core::balance::stubs`.
+  - The call rules (`call_unresolved`, `call_recursive`, `call_alternatives_without_note`, the interface checks) are Mangle rules (M3.3).
 
 ---
 

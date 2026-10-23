@@ -76,25 +76,6 @@ fn status_rank(s: Status) -> u8 {
     }
 }
 
-/// The node each box key details: the box at index `i` of decomposition diagram `D` is
-/// `D.child(i + 1)`; the A-0 box is A0. Boxes on higher-context diagrams have no node.
-pub(crate) fn box_nodes(model: &Model) -> BTreeMap<BoxKey, NodeId> {
-    let mut out = BTreeMap::new();
-    for (node, d) in &model.diagrams {
-        for (i, b) in d.boxes.iter().enumerate() {
-            let n = match node {
-                NodeId::Context { level: 0 } => Some(NodeId::a0()),
-                NodeId::Context { .. } => None,
-                NodeId::Node(_) => u8::try_from(i + 1).ok().and_then(|k| node.child(k)),
-            };
-            if let Some(n) = n {
-                out.entry(b.key.clone()).or_insert(n);
-            }
-        }
-    }
-    out
-}
-
 /// The ends of a statement, each with its role: `(part, is_source, endpoint)`. A trunk end
 /// has `part = None`.
 fn ends(shape: &ArrowShape) -> Vec<(Option<usize>, bool, &Endpoint)> {
@@ -264,8 +245,8 @@ impl<'a> Draft<'a> {
         let removed: Vec<BoxKey> = before.difference(&after).cloned().collect();
         self.model.meta.retired.extend(removed.iter().cloned());
         self.repair_notes();
-        let base_nodes = box_nodes(self.base);
-        let new_nodes = box_nodes(&self.model);
+        let base_nodes = self.base.box_nodes();
+        let new_nodes = self.model.box_nodes();
         let mut rename = RenameMap::default();
         for k in &removed {
             rename.boxes.insert(k.clone(), None);

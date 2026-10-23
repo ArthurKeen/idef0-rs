@@ -6,9 +6,11 @@ use idef0_core::command::{Command, Described, End, EndSpec, Env, apply, apply_op
 use idef0_core::diag::Severity;
 use idef0_core::id::{NodeId, Side};
 use idef0_core::identity::{SlugMinter, arrow_ids};
-use idef0_core::model::{ArrowShape, Endpoint, Model, Status};
+use idef0_core::model::{ArrowShape, CallArrow, Endpoint, KeyRef, Model, Status};
+use idef0_core::text::BoxKey;
 use idef0_core::text::NonEmptyString;
 use idef0_core::typecheck::typecheck;
+use nonempty::NonEmpty;
 use proptest::prelude::*;
 
 fn fixture(name: &str) -> Model {
@@ -61,7 +63,7 @@ fn command(m: &Model, (kind, a, b, c): (u8, usize, usize, usize)) -> Option<Comm
         .collect();
     let pick = |v: usize, len: usize| (len > 0).then(|| v % len);
     let name = |s: String| NonEmptyString::new(s).expect("name");
-    Some(match kind % 12 {
+    Some(match kind % 15 {
         0 => {
             let d = decomp[pick(a, decomp.len())?].clone();
             let n = m.diagrams[&d].boxes.len();
@@ -90,7 +92,7 @@ fn command(m: &Model, (kind, a, b, c): (u8, usize, usize, usize)) -> Option<Comm
                 .flat_map(|s| std::iter::once(s.trunk).chain(s.parts))
                 .collect();
             let id = ids[pick(b, ids.len())?].clone();
-            if kind % 12 == 4 {
+            if kind % 15 == 4 {
                 Command::DeleteArrow { diagram: d, id }
             } else {
                 let keys: Vec<_> = m.diagrams[&d].boxes.iter().map(|x| x.key.clone()).collect();
@@ -183,6 +185,24 @@ fn command(m: &Model, (kind, a, b, c): (u8, usize, usize, usize)) -> Option<Comm
                 concept: None,
             }
         }
+        12 => Command::Decompose {
+            key: boxes[pick(a, boxes.len())?].clone(),
+        },
+        13 => {
+            let target = boxes[pick(b, boxes.len())?].clone();
+            let t: KeyRef<BoxKey> = format!("@{target}").parse().ok()?;
+            Command::SetCall {
+                key: boxes[pick(a, boxes.len())?].clone(),
+                call: CallArrow {
+                    targets: NonEmpty::new(t),
+                    note: None,
+                    map: Vec::new(),
+                },
+            }
+        }
+        14 => Command::ClearCall {
+            key: boxes[pick(a, boxes.len())?].clone(),
+        },
         _ => Command::SetStatus {
             diagram: any[pick(a, any.len())?].clone(),
             status: [Status::Draft, Status::Recommended][b % 2],
@@ -210,7 +230,7 @@ proptest! {
     #[test]
     fn edits_keep_the_model_valid_and_undoable(
         start in 0usize..4,
-        picks in proptest::collection::vec((0u8..12, 0usize..64, 0usize..64, 0usize..64), 1..14),
+        picks in proptest::collection::vec((0u8..15, 0usize..64, 0usize..64, 0usize..64), 1..14),
     ) {
         let mut m = fixtures().swap_remove(start);
         let before_errors = errors(&m);
@@ -249,12 +269,12 @@ fn every_command_kind_applies() {
             .wrapping_add(1_442_695_040_888_963_407);
         usize::try_from(seed >> 33).unwrap_or(0)
     };
-    let mut applied = [0usize; 12];
+    let mut applied = [0usize; 15];
     let mut tried = 0;
     for round in 0..200 {
         let mut m = fixtures().swap_remove(round % 4);
         for _ in 0..10 {
-            let kind = u8::try_from(next() % 12).unwrap_or(0);
+            let kind = u8::try_from(next() % 15).unwrap_or(0);
             let Some(cmd) = command(&m, (kind, next(), next(), next())) else {
                 continue;
             };

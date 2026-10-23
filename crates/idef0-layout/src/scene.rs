@@ -319,7 +319,8 @@ pub fn diagram_title(model: &Model, node: &NodeId) -> String {
         .unwrap_or_default()
 }
 
-/// The diagram whose box this diagram details, and that box's index: the CONTEXT sketch.
+/// The diagram whose box this diagram details, and that box's index: the CONTEXT sketch
+/// (FR-DIAG-09). A0's context is A-1 when there is one (its lineage box), else A-0.
 fn context_of(model: &Model, node: &NodeId) -> Option<(NodeId, usize)> {
     let (parent, index) = match node {
         NodeId::Context { level } => {
@@ -327,7 +328,16 @@ fn context_of(model: &Model, node: &NodeId) -> Option<(NodeId, usize)> {
             let lineage = model.diagrams.get(&up)?.lineage?;
             (up, usize::from(lineage))
         }
-        NodeId::Node(path) if path.is_empty() => (NodeId::context(0), 0),
+        NodeId::Node(path) if path.is_empty() => {
+            match model
+                .diagrams
+                .get(&NodeId::context(1))
+                .and_then(|d| d.lineage)
+            {
+                Some(l) => (NodeId::context(1), usize::from(l)),
+                None => (NodeId::context(0), 0),
+            }
+        }
         NodeId::Node(path) => (
             node.parent()?,
             usize::from(path[path.len() - 1]).saturating_sub(1),
@@ -568,15 +578,16 @@ fn form(
     let opt = |s: Option<&str>| s.unwrap_or("").to_owned();
     let wh = WORKING_ROWS * row;
     let cols = columns(frame.x, frame.w, &[3, 5, 3, 2, 3]);
-    let used_at = cell(
-        "form:used-at",
-        cols[0],
-        0,
-        wh,
-        &["USED AT:".to_owned()],
-        metric,
-        m,
-    );
+    // FR-CALL-04: the callers of this diagram's boxes, within this model
+    let callers: Vec<String> = idef0_core::calls::used_at_diagram(&[model], model, node)
+        .iter()
+        .map(ToString::to_string)
+        .collect();
+    let mut used = vec!["USED AT:".to_owned()];
+    if !callers.is_empty() {
+        used.push(callers.join(", "));
+    }
+    let used_at = cell("form:used-at", cols[0], 0, wh, &used, metric, m);
     let author = cell(
         "form:author",
         cols[1],
@@ -956,6 +967,38 @@ mod tests {
             .filter(|&i| sketch.marks[i].on)
             .collect();
         assert_eq!(lit, [2], "box 3 of A0 is filled");
+    }
+
+    // FR-CALL-04: USED AT lists the callers of the diagram's boxes; FR-DIAG-09: A0's
+    // CONTEXT is A-1 when there is one.
+    #[test]
+    fn used_at_and_a0_context() {
+        let src = "idef0 0.2\nmodel \"U\" {\n  abbrev \"USE\"\n}\ndiagram A-0 \"Run\" {\n  box 0 \"Run\"\n}\ndiagram A0 {\n  box 1 \"Take\"\n  box 2 \"Pack\"\n  box 3 \"Ship\"\n  call 3 -> @wrap\n}\ndiagram A2 {\n  box 1 \"Pick\"\n  box 2 \"Wrap\"\n  box 3 \"Label\"\n}\n";
+        let m = model(src);
+        let s = scene(&m, &"A2".parse().expect("A2"), ThemeId::Modern);
+        let used = s.form.working.as_ref().expect("working").cells[0]
+            .lines
+            .iter()
+            .map(|l| l.text.clone())
+            .collect::<Vec<_>>();
+        assert_eq!(used, ["USED AT:", "A3"]);
+        let c = fixture("valid/constructs.idef0");
+        let a0 = scene(&c, &NodeId::a0(), ThemeId::Modern);
+        let ctx = a0
+            .form
+            .working
+            .as_ref()
+            .expect("working")
+            .cells
+            .iter()
+            .find(|x| x.field == "form:context")
+            .expect("context");
+        assert_eq!(ctx.marks.len(), 3, "the A-1 sketch has three boxes");
+        assert_eq!(
+            ctx.marks.iter().position(|k| k.on),
+            Some(1),
+            "its lineage box"
+        );
     }
 
     // Box numbers as shown: 0 on A-0, the lineage number on A-n (0 on A-1, −(n−1) above),

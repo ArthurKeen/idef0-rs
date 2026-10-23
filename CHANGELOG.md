@@ -7,6 +7,12 @@ policy in [docs/architecture.md §16](docs/architecture.md#16-release-and-versio
 ## [Unreleased]
 
 ### Added
+- Decomposition and calls (roadmap M1.6; metamodel §7, §11; FR-EDIT-09, -18, FR-CALL-01..04, -07, -09, -12, -13, FR-BAL-01, FR-DIAG-09):
+  - **Commands:** `Decompose` creates an empty child (working, derived title); it is rejected on callers, environment boxes and decomposed boxes. `SetCall` replaces a box's one call, and is rejected on decomposed, top and environment boxes and on uncallable local targets. `ClearCall` removes a call.
+  - **`idef0_core::calls`:** call labels (`A5.2`, `SEC/A2.1`, alternatives with `|`, unresolved keys as written) and the Used At reverse index across the models given.
+  - **`idef0_core::balance::stubs`:** the parent ICOMs a child does not wire yet.
+  - **`Model::box_nodes`:** the node each box key details.
+  - **Diagram form:** the USED AT field lists the diagram's callers, and A0's CONTEXT shows A-1 when there is one (FR-DIAG-09). The `valid-constructs@A0` SVG snapshot changes accordingly.
 - Commands, patches and undo (roadmap M1.5; metamodel §13; FR-EDIT-01..08, -10, -11, -13, -15, -17, -19, -20). `idef0_core::command::apply` is a pure function from a model, a `Command` and an `Env` (the key minter) to a new model and a `Patch`. A patch holds forward and inverse ops (one diagram, concept or the metadata each) and a `RenameMap` (nodes, ports, arrow ids, box keys).
   - Commands: `AddBox`, `RenameBox`, `MoveBox`, `DeleteBox` (the §13.1 cascade), `DeleteDiagram`, `AddArrow`, `DeleteArrow`, `Retarget`, `ReorderPorts` (re-coding the child boundary atomically, with vanished codes becoming `[Sk]` tunnels), `SetDescription`, `SetStatus` and `Paste` (with `copy`, fresh keys).
   - Every patch applies the major and minor status rules and retires removed keys. It rewrites free-text node references in their written style. A command that would add an `E-*` finding is rejected.
