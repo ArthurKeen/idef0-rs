@@ -104,21 +104,34 @@ A Rust workspace. Core, rules and layout are pure Rust and compile to both nativ
 
 | Crate | Role | State |
 |---|---|---|
-| `idef0-core` | Metamodel, identity, `.idef0` parser and formatter, commands and undo, keyboard FSM, lints, search index | skeleton |
+| `idef0-core` | Metamodel, identity, `.idef0` parser and formatter, commands and undo, keyboard FSM, lints, search index | model, parser, type check, identity, commands and undo, calls |
 | `idef0-mangle` | Fact extraction, Mangle rules, profiles, diagnostics (JSON / SARIF) | skeleton |
-| `idef0-layout` | FIPS auto layout, routing, Auto-Arrange, SVG / ASCII renderers, themes | skeleton |
+| `idef0-layout` | FIPS auto layout, routing, Auto-Arrange, SVG / ASCII renderers, themes | staircase, routing, tracks, Scene, SVG |
 | `idef0-ingest` | PRD parser, tree-sitter code scanner, sync, import/export (native only) | planned (M0.2) |
-| `idef0-wasm` | Leptos web app (CSR, built with Trunk) | skeleton |
+| `idef0-wasm` | Leptos web app (CSR, built with Trunk) | viewer shell |
 | `idef0-server` | Axum backend: workspace store, API, security, proposals, AI, PNG export | skeleton |
-| `idef0-cli` | The `idef0` command line ([reference](docs/cli.md)) | skeleton |
+| `idef0-cli` | The `idef0` command line ([reference](docs/cli.md)) | `render --svg` |
 
 ## Getting started
 
-The crates are currently placeholders, but the workspace builds:
+Build and test the workspace:
 
 ```sh
 cargo build --workspace
 cargo test --workspace
+```
+
+Render a diagram as SVG:
+
+```sh
+cargo run -p idef0-cli -- render fixtures/dogfood/idef0-rs.idef0 A0 > a0.svg
+cargo run -p idef0-cli -- render fixtures/valid/constructs.idef0 --out diagrams/   # every diagram
+```
+
+Run the web viewer (needs [Trunk](https://trunkrs.dev) 0.21 and the `wasm32-unknown-unknown` target), then open <http://127.0.0.1:8080>:
+
+```sh
+cd crates/idef0-wasm && trunk serve
 ```
 
 The workspace uses Rust edition 2024. The toolchain pin and MSRV are described in [architecture](docs/architecture.md).

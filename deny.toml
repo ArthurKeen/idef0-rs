@@ -7,7 +7,10 @@ all-features = true
 [advisories]
 version = 2
 yanked = "deny"
-ignore = []
+# Exceptions name the advisory, the path and when to revisit (architecture §17.1).
+ignore = [
+  { id = "RUSTSEC-2024-0436", reason = "paste is unmaintained (no vulnerability); only via leptos 0.8 (either_of, tachys); revisit on the next leptos upgrade" },
+]
 
 [licenses]
 version = 2
@@ -25,6 +28,7 @@ allow = [
   "Unicode-3.0",
   "CC0-1.0",
   "Unlicense",
+  "BSL-1.0",   # xxhash-rust, via leptos 0.8 → server_fn (M7.1); OSI-approved, permissive
 ]
 
 [licenses.private]

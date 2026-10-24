@@ -1,0 +1,11 @@
+# Trunk configuration (docs/architecture.md §13.1). The API proxies arrive with the server (M8).
+[build]
+target = "index.html"
+dist   = "dist"
+
+[watch]
+watch = ["src", "index.html", "style", "../idef0-core/src", "../idef0-layout/src"]
+
+[serve]
+addresses = ["127.0.0.1"]
+port      = 8080

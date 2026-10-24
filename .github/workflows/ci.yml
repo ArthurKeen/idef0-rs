@@ -1,5 +1,5 @@
 # Pull-request pipeline (docs/architecture.md §15.1): base jobs (roadmap M0.3), cross-OS and MSRV
-# jobs (M0.4). wasm-bindgen-test, trunk, e2e, bench-gate and dogfood arrive with the epics that
+# jobs (M0.4), the trunk build and bundle size (M7.1). wasm-bindgen-test, e2e, bench-gate and dogfood arrive with the epics that
 # create what they test.
 name: CI
 
@@ -144,6 +144,21 @@ jobs:
         run: >
           cargo build --locked --target wasm32-unknown-unknown
           -p idef0-core -p idef0-mangle -p idef0-layout -p idef0-wasm
+      - name: Install trunk (pinned, architecture §12.1)
+        run: |
+          curl -sSL https://github.com/trunk-rs/trunk/releases/download/v0.21.14/trunk-x86_64-unknown-linux-gnu.tar.gz \
+            | tar -xz -C "$HOME/.cargo/bin" trunk
+          trunk --version
+      - name: trunk build --release (roadmap M7.1)
+        working-directory: crates/idef0-wasm
+        run: trunk build --release --locked
+      - name: Bundle size (NFR-WASM-01, gzip ≤ 2.5 MB)
+        working-directory: crates/idef0-wasm
+        run: |
+          raw=$(cat dist/*.wasm | wc -c)
+          gz=$(cat dist/*.wasm | gzip -9 | wc -c)
+          echo "wasm bundle: ${raw} bytes, ${gz} bytes gzip (limit 2621440)" | tee -a "$GITHUB_STEP_SUMMARY"
+          test "$gz" -le 2621440
 
   docs:
     name: docs links
