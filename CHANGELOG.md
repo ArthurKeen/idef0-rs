@@ -7,6 +7,11 @@ policy in [docs/architecture.md §16](docs/architecture.md#16-release-and-versio
 ## [Unreleased]
 
 ### Added
+- Web app scaffold (roadmap M7.1; architecture §5.1, §13): `idef0-wasm` is now a Leptos 0.8 CSR app built with Trunk.
+  - **State:** `Doc` (model, rev, undo history) and `EditorState` (the diagram on screen) are held as signals. The bundled dogfood model's A0 is drawn from `idef0-layout`'s Scene and SVG.
+  - **Running it:** `trunk serve` in `crates/idef0-wasm`.
+  - **CI:** the `wasm32 build` job runs `trunk build --release --locked` and reports the gzipped bundle size against NFR-WASM-01's 2.5 MB limit (340 KB today).
+  - **Dependency policy:** `deny.toml` allows BSL-1.0 for `xxhash-rust` (via `leptos` → `server_fn`) and ignores RUSTSEC-2024-0436 (`paste` unmaintained, via `leptos`). Both are recorded in architecture §17.1.
 - Decomposition and calls (roadmap M1.6; metamodel §7, §11; FR-EDIT-09, -18, FR-CALL-01..04, -07, -09, -12, -13, FR-BAL-01, FR-DIAG-09):
   - **Commands:** `Decompose` creates an empty child (working, derived title); it is rejected on callers, environment boxes and decomposed boxes. `SetCall` replaces a box's one call, and is rejected on decomposed, top and environment boxes and on uncallable local targets. `ClearCall` removes a call.
   - **`idef0_core::calls`:** call labels (`A5.2`, `SEC/A2.1`, alternatives with `|`, unresolved keys as written) and the Used At reverse index across the models given.

@@ -1,0 +1,10 @@
+/* idef0-rs viewer shell (roadmap M7.1). The diagram's own styles come with its SVG. */
+:root { color-scheme: light; font-family: system-ui, sans-serif; }
+body { margin: 0; display: flex; flex-direction: column; min-height: 100vh; background: #f4f4f2; color: #111; }
+header { display: flex; align-items: baseline; gap: 1rem; padding: 0.5rem 1rem; background: #fff; border-bottom: 1px solid #ccc; }
+header h1 { margin: 0; font-size: 1.1rem; }
+header .model { color: #555; }
+main { flex: 1; overflow: auto; padding: 1rem; }
+.diagram svg { background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / 20%); max-width: none; }
+.status { padding: 0.25rem 1rem; font: 12px ui-monospace, monospace; background: #222; color: #ddd; }
+.error { color: #a00; white-space: pre-wrap; }

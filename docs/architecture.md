@@ -842,7 +842,8 @@ Deep proptest (10k cases per property, including the model generator), `cargo fu
 ### 17.1 License (D12, NFR-LIC-01)
 
 - Every crate sets `license = "MIT OR Apache-2.0"` via `[workspace.package]`. The repo has `LICENSE-MIT` and `LICENSE-APACHE`.
-- `deny.toml` allowlist: MIT, Apache-2.0, Apache-2.0 WITH LLVM-exception, BSD-2-Clause, BSD-3-Clause, ISC, Zlib, Unicode-3.0, CC0-1.0, Unlicense. `rust-stemmers` (MIT/BSD-3-Clause), `tiny-skia` (BSD-3-Clause), `notify` (CC0-1.0) and `blake3` (CC0-1.0 OR Apache-2.0) are covered by it. Any addition needs a PR that names the crate. Copyleft licenses are denied.
+- `deny.toml` allowlist: MIT, Apache-2.0, Apache-2.0 WITH LLVM-exception, BSD-2-Clause, BSD-3-Clause, ISC, Zlib, Unicode-3.0, CC0-1.0, Unlicense, BSL-1.0. BSL-1.0 (Boost, OSI-approved and permissive) was added in M7.1 for `xxhash-rust`, which `leptos` 0.8 needs through `server_fn`. `rust-stemmers` (MIT/BSD-3-Clause), `tiny-skia` (BSD-3-Clause), `notify` (CC0-1.0) and `blake3` (CC0-1.0 OR Apache-2.0) are covered by it. Any addition needs a PR that names the crate. Copyleft licenses are denied.
+- Advisory exceptions in `deny.toml` name the advisory, the dependency path and when to revisit it. The current one is RUSTSEC-2024-0436: `paste` is unmaintained, has no known vulnerability, and is reached only through `leptos` 0.8.
 - **Fonts:** bundled fonts must be SIL OFL 1.1 or more permissive. Liberation Serif (OFL 1.1) is used for the `classic` theme. The retro VGA-style UI font must also meet this rule; OFL texts and attributions are shown in About and shipped in `assets/fonts/LICENSES/`.
 - The verb lexicon used by `L-TITLE-01` must have a compatible license and recorded source before it is bundled ([validation](spec/validation.md#72-l-codes-rust-lints)).
 

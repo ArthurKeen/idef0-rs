@@ -182,6 +182,8 @@
 
 **Execution order (decided 2026-10-20): SVG first.** After M1.4 the work takes the shortest path to a viewable diagram, M2.1 → M4.0 ⚑ → M4.1–M4.5 (`idef0 render --svg`), then returns to M1.5–M1.7, M2.2–M2.6 and M3. Layout depends on none of those (table above).
 
+**Viewer first (decided 2026-10-23).** After M1.6 comes M7.1, then M7.2 without its retro `<pre>` toggle, which waits for the ASCII renderer (M5.6). The result is a read-only browser viewer. M1.7, M2.2–M2.6 and M3 follow, then the remaining epics in order.
+
 **Parallel tracks:**
 - M5 (except M5.6) once M4.5 is done.
 - M9.1–M9.3 once M8.1 is done.
